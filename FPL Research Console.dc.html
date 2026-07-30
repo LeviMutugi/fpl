@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#F8FAFC;color:#0F172A;font-family:'Inter', sans-serif;-webkit-font-smoothing:antialiased}
+a{color:oklch(.78 .12 196);text-decoration:none}
+a:hover{color:oklch(.86 .12 196)}
+::selection{background:oklch(.5 .1 196);color:#fff}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent}
+input[type=range]::-webkit-slider-runnable-track{height:3px;background:rgba(0,0,0,.22);border-radius:14px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;margin-top:-6px;border-radius:50%;background:oklch(.82 .12 196);border:2px solid #ffffff;box-shadow:0 0 0 1px oklch(.6 .1 196)}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.20);border-radius:14px}
+::-webkit-scrollbar-track{background:transparent}
+@keyframes dcfade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes dcpulse{0%,100%{opacity:.35}50%{opacity:.9}}
+</style>
+</helmet>
+
+<div style="display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh;background:#F8FAFC">
+
+<aside style="border-right:1px solid rgba(0,0,0,.08);background:#FFFFFF;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto">
+<div style="padding:20px 18px 16px;border-bottom:1px solid rgba(0,0,0,.06)">
+<div style="display:flex;align-items:center;gap:9px">
+<div style="width:22px;height:22px;border-radius:14px;border:1px solid oklch(.6 .1 196);background:linear-gradient(150deg,oklch(.9 .05 200),#ffffff);display:flex;align-items:center;justify-content:center;font:600 10px 'Inter', sans-serif;color:oklch(.85 .1 196)">xP</div>
+<div style="font:600 13.5px 'Outfit', sans-serif;letter-spacing:-.2px">Pitch&#8202;Lab</div>
+</div>
+<div style="margin-top:7px;font:400 10.5px 'Inter', sans-serif;color:#64748B;letter-spacing:.02em">2026/27 · GW23 open</div>
+</div>
+
+<nav style="padding:12px 10px;display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="8">
+<div onClick="{{ n.go }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:32px;cursor:pointer;background:{{ n.bg }};color:{{ n.fg }}" style-hover="background:rgba(0,0,0,.06)">
+<div style="width:5px;height:5px;border-radius:50%;background:{{ n.dot }}"></div>
+<div style="font:500 12.5px 'Inter', sans-serif;letter-spacing:-.1px;flex:1">{{ n.label }}</div>
+<div style="font:500 9.5px 'Inter', sans-serif;color:#64748B">{{ n.kbd }}</div>
+</div>
+</sc-for>
+</nav>
+
+<div style="padding:14px 16px;border-top:1px solid rgba(0,0,0,.06);margin-top:6px">
+<div style="font:500 9.5px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:9px">MODEL REGISTRY</div>
+<sc-for list="{{ registry }}" as="m" hint-placeholder-count="7">
+<div onClick="{{ m.go }}" style="display:flex;align-items:center;gap:8px;padding:5px 0;cursor:pointer;opacity:{{ m.op }}" style-hover="opacity:1">
+<div style="width:3px;height:14px;border-radius:14px;background:{{ m.color }}"></div>
+<div style="flex:1;min-width:0;font:400 11.5px 'Inter', sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ m.n }}</div>
+<div style="font:500 10px 'Inter', sans-serif;color:{{ m.rhoC }}">{{ m.rho }}</div>
+</div>
+</sc-for>
+<div style="margin-top:8px;font:400 9.5px 'Inter', sans-serif;color:#94A3B8">ρ = spearman, h=1, in-band</div>
+</div>
+
+<div style="margin-top:auto;padding:14px 16px;border-top:1px solid rgba(0,0,0,.06)">
+<div onClick="{{ toggleResearch }}" style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:7px 9px;border-radius:32px;border:1px solid {{ rmBorder }};background:{{ rmBg }}">
+<div style="width:26px;height:15px;border-radius:20px;background:{{ rmTrack }};position:relative;flex:none;transition:background .18s">
+<div style="position:absolute;top:2px;left:{{ rmKnob }};width:11px;height:11px;border-radius:50%;background:#fff;transition:left .18s"></div>
+</div>
+<div style="font:500 11px 'Inter', sans-serif;color:{{ rmFg }}">Research mode</div>
+</div>
+<div style="margin-top:7px;font:400 9.5px/1.45 'Inter', sans-serif;color:#94A3B8">kills all motion · --motion-scale:0</div>
+</div>
+</aside>
+
+<main style="min-width:0;display:flex;flex-direction:column">
+
+<header style="position:sticky;top:0;z-index:20;background:rgba(255,255,255,.86);backdrop-filter:blur(14px);border-bottom:1px solid rgba(0,0,0,.08);padding:13px 26px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+<div style="min-width:0">
+<div style="font:600 15px 'Outfit', sans-serif;letter-spacing:-.3px">{{ title }}</div>
+<div style="margin-top:2px;font:400 10.5px 'Inter', sans-serif;color:#64748B">{{ subtitle }}</div>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:7px;padding:5px 9px;border-radius:32px;border:1px solid rgba(0,0,0,.10);background:#F1F5F9;white-space:nowrap">
+<div style="width:5px;height:5px;border-radius:50%;background:oklch(.75 .16 145);animation:dcpulse 2.4s infinite"></div>
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B">run <span style="color:#1E293B">{{ runId }}</span></div>
+<div style="width:1px;height:12px;background:rgba(0,0,0,.15)"></div>
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B">snap <span style="color:#1E293B">{{ snap }}</span></div>
+</div>
+<div style="display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:32px;border:1px solid oklch(.4 .09 60);background:oklch(.22 .05 60);white-space:nowrap">
+<div style="font:500 10px 'Inter', sans-serif;color:oklch(.8 .1 70)">GW23 deadline</div>
+<div style="font:600 11px 'Inter', sans-serif;color:oklch(.9 .09 80)">{{ countdown }}</div>
+</div>
+<div onClick="{{ openPalette }}" style="display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:32px;border:1px solid rgba(0,0,0,.15);background:#F1F5F9;cursor:pointer" style-hover="border-color:rgba(0,0,0,.35)">
+<div style="font:400 11.5px 'Inter', sans-serif;color:#64748B">Search…</div>
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;border:1px solid rgba(0,0,0,.18);border-radius:10px;padding:1px 4px">⌘K</div>
+</div>
+</header>
+
+<sc-if value="{{ isPitch }}" hint-placeholder-val="{{ true }}">
+<section data-screen-label="Consensus pitch" style="padding:22px 26px 40px">
+
+<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px">
+<div style="display:flex;padding:3px;border-radius:20px;background:#F1F5F9;border:1px solid rgba(0,0,0,.10);gap:2px">
+<sc-for list="{{ pitchModes }}" as="p" hint-placeholder-count="3">
+<div onClick="{{ p.go }}" style="padding:6px 13px;border-radius:14px;cursor:pointer;font:500 11.5px 'Inter', sans-serif;background:{{ p.bg }};color:{{ p.fg }};transition:background .15s;white-space:nowrap">{{ p.label }}</div>
+</sc-for>
+</div>
+
+<div style="display:flex;align-items:center;gap:11px;padding:6px 14px 6px 12px;border-radius:20px;background:#F1F5F9;border:1px solid rgba(0,0,0,.10)">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.06em">HORIZON</div>
+<input type="range" min="1" max="8" step="1" value="{{ horizon }}" onChange="{{ setHorizon }}" onInput="{{ setHorizon }}" style="width:150px" />
+<div style="font:600 12px 'Inter', sans-serif;color:oklch(.85 .11 196);min-width:62px">{{ horizonLabel }}</div>
+<div style="width:1px;height:16px;background:rgba(0,0,0,.15)"></div>
+<div style="font:400 10.5px 'Inter', sans-serif;color:#64748B;white-space:nowrap">XI churn <span style="color:#0F172A">{{ churn }}</span></div>
+</div>
+
+<div style="display:flex;align-items:center;gap:9px;padding:6px 12px;border-radius:20px;background:#F1F5F9;border:1px solid rgba(0,0,0,.10)">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.06em">RANK BY</div>
+<sc-for list="{{ activeChips }}" as="a" hint-placeholder-count="7">
+<div onClick="{{ a.go }}" style="padding:4px 9px;border-radius:24px;cursor:pointer;font:500 10.5px 'Inter', sans-serif;background:{{ a.bg }};color:{{ a.fg }};border:1px solid {{ a.bd }}">{{ a.k }}</div>
+</sc-for>
+</div>
+
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:16px">
+<div style="display:flex;align-items:center;gap:7px">
+<div style="width:22px;height:4px;border-radius:14px;background:linear-gradient(90deg,#3b414c,oklch(.72 .17 330))"></div>
+<div style="font:400 10.5px 'Inter', sans-serif;color:#64748B">model disagreement</div>
+</div>
+<div style="font:600 13px 'Inter', sans-serif;color:#0F172A;white-space:nowrap">{{ squadXP }} <span style="font-weight:400;font-size:10.5px;color:#64748B">xP · £{{ squadCost }}m · {{ formation }}</span></div>
+</div>
+</div>
+
+<sc-if value="{{ modeAesthetic }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+<div style="flex:1 1 640px;min-width:0">
+<div style="overflow-x:auto;padding-bottom:6px">
+<div style="position:relative;width:100%;min-width:640px;max-width:940px;height:680px;border-radius:32px;overflow:hidden;border:1px solid rgba(0,0,0,.10);background:#F8FAFC;background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.02) 0 9.09%,rgba(255,255,255,0) 9.09% 18.18%)">
+<div style="position:absolute;inset:16px;border:1px solid rgba(0,0,0,.12);border-radius:10px"></div>
+<div style="position:absolute;left:50%;top:16px;width:1px;bottom:16px;background:rgba(0,0,0,.05)"></div>
+<div style="position:absolute;left:50%;top:50%;width:150px;height:150px;transform:translate(-50%,-50%);border:1px solid rgba(0,0,0,.08);border-radius:50%"></div>
+<div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:42%;height:118px;border:1px solid rgba(0,0,0,.10);border-bottom:none;border-radius:10px 4px 0 0"></div>
+<div style="position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:19%;height:52px;border:1px solid rgba(0,0,0,.08);border-bottom:none"></div>
+<div style="position:absolute;left:50%;top:16px;transform:translateX(-50%);width:42%;height:118px;border:1px solid rgba(0,0,0,.10);border-top:none;border-radius:0 0 4px 4px"></div>
+<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 108%,rgba(0,0,0,.04),transparent 62%)"></div>
+
+<sc-for list="{{ xi }}" as="c" hint-placeholder-count="11">
+<div style="position:absolute;left:{{ c.x }};top:{{ c.y }};transform:translate(-50%,-50%);transition:left {{ motion }},top {{ motion }};z-index:{{ c.z }}">
+<div onClick="{{ c.open }}" style="position:relative;width:98px;height:128px;border-radius:28px;background:linear-gradient(168deg,#ffffff 0%,#f8fafc 100%);border:1px solid rgba(0,0,0,.15);cursor:pointer;overflow:hidden;box-shadow:0 14px 30px -10px rgba(0,0,0,.15);transition:transform .16s ease-out,border-color .16s" style-hover="transform:translateY(-4px);border-color:rgba(0,0,0,.40)">
+<img src="https://resources.premierleague.com/premierleague/photos/players/110x140/p{{ c.code || 0 }}.png" style="position:absolute; right: -5px; bottom: 0; width: 85px; object-fit: contain; z-index: 0; opacity: 0.95; -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%); mask-image: linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,0) 100%);">
+<div style="position:absolute;inset:0;border-radius:28px;pointer-events:none;box-shadow:inset 0 0 0 1px oklch(.72 .17 330),0 0 26px -6px oklch(.72 .17 330);opacity:{{ c.aura }};transition:opacity .3s"></div>
+<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:{{ c.posColor }}"></div>
+<div style="position:absolute;left:0;right:0;top:0;height:44px;background:linear-gradient(180deg,rgba(0,0,0,.05),transparent)"></div>
+<div style="position:relative;padding:9px 9px 0 12px;display:flex;align-items:flex-start;justify-content:space-between;z-index:1;">
+<div>
+<div style="font:600 25px/1 'Outfit', sans-serif;letter-spacing:-1px;color:#0F172A">{{ c.xp }}</div>
+<div style="margin-top:2px;font:500 8px 'Inter', sans-serif;color:#64748B;letter-spacing:.1em">xP {{ c.hLabel }}</div>
+</div>
+<div style="font:600 8.5px 'Inter', sans-serif;color:{{ c.posColor }};letter-spacing:.06em">{{ c.pos }}</div>
+</div>
+<div style="position:absolute;left:12px;right:9px;bottom:30px;z-index:1;">
+<div style="font:600 11.5px/1.15 'Inter', sans-serif;letter-spacing:-.15px;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.last }}</div>
+<div style="margin-top:3px;display:flex;align-items:center;gap:5px">
+<div style="font:500 8.5px 'Inter', sans-serif;color:#64748B">{{ c.team }}</div>
+<div style="width:2px;height:2px;border-radius:50%;background:#CBD5E1"></div>
+<div style="font:500 8.5px 'Inter', sans-serif;color:#64748B">£{{ c.price }}</div>
+</div>
+</div>
+<div style="position:absolute;left:12px;right:9px;bottom:9px;z-index:1;">
+<div style="position:relative;height:12px">
+<div style="position:absolute;left:0;right:0;top:5px;height:1px;background:rgba(0,0,0,.20)"></div>
+<sc-for list="{{ c.ticks }}" as="t" hint-placeholder-count="7">
+<div style="position:absolute;left:{{ t.x }};top:1px;width:1.5px;height:9px;background:{{ t.c }};transform:translateX(-50%);border-radius:1px"></div>
+</sc-for>
+<div style="position:absolute;left:{{ c.consX }};top:0;width:3px;height:11px;background:#f2f4f7;transform:translateX(-50%);border-radius:14px"></div>
+</div>
+</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="margin-top:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.08em;white-space:nowrap">BENCH · weighted ×0.18</div>
+<sc-for list="{{ bench }}" as="b" hint-placeholder-count="4">
+<div onClick="{{ b.open }}" style="display:flex;align-items:center;gap:9px;padding:7px 12px 7px 9px;border-radius:20px;background:#F1F5F9;border:1px solid rgba(0,0,0,.08);cursor:pointer;opacity:.72;transition:opacity .16s" style-hover="opacity:1;border-color:rgba(0,0,0,.30)">
+<div style="width:3px;height:24px;border-radius:14px;background:{{ b.posColor }}"></div>
+<div>
+<div style="font:500 11px 'Inter', sans-serif">{{ b.last }}</div>
+<div style="font:400 9px 'Inter', sans-serif;color:#64748B">{{ b.team }} · £{{ b.price }}</div>
+</div>
+<div style="font:600 13px 'Inter', sans-serif;color:#1E293B">{{ b.xp }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:14px">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:15px 16px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:12px">CAPTAINCY · RISK-ADJUSTED</div>
+<sc-for list="{{ captaincy }}" as="c" hint-placeholder-count="4">
+<div style="padding:9px 0;border-top:1px solid rgba(0,0,0,.05)">
+<div style="display:flex;align-items:baseline;gap:8px">
+<div style="font:500 12px 'Inter', sans-serif;flex:1">{{ c.last }}</div>
+<div style="font:600 12px 'Inter', sans-serif">{{ c.ev }}</div>
+<div style="font:400 9.5px 'Inter', sans-serif;color:#64748B">EV</div>
+</div>
+<div style="margin-top:6px;position:relative;height:5px;border-radius:18px;background:rgba(0,0,0,.06);overflow:hidden">
+<div style="position:absolute;left:0;top:0;bottom:0;width:{{ c.w }};background:linear-gradient(90deg,oklch(.5 .09 196),oklch(.8 .12 196));border-radius:18px;transition:width {{ motion }}"></div>
+</div>
+<div style="margin-top:5px;display:flex;gap:12px;font:400 9.5px 'Inter', sans-serif;color:#64748B">
+<div>P(haul≥10) {{ c.haul }}</div>
+<div>P(blank≤2) {{ c.blank }}</div>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:15px 16px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:11px">WHERE MODELS DISAGREE</div>
+<sc-for list="{{ topDisagree }}" as="d" hint-placeholder-count="4">
+<div onClick="{{ d.open }}" style="padding:8px 0;border-top:1px solid rgba(0,0,0,.05);cursor:pointer" style-hover="opacity:.8">
+<div style="display:flex;align-items:baseline;gap:8px">
+<div style="font:500 11.5px 'Inter', sans-serif;flex:1">{{ d.last }}</div>
+<div style="font:600 11px 'Inter', sans-serif;color:oklch(.78 .16 330)">σ {{ d.sd }}</div>
+</div>
+<div style="margin-top:4px;font:400 10px/1.4 'Inter', sans-serif;color:#64748B">{{ d.why }}</div>
+</div>
+</sc-for>
+</div>
+
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:15px 16px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:10px">CHIP STATE</div>
+<sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:9px;padding:6px 0">
+<div style="width:6px;height:6px;border-radius:14px;background:{{ c.color }}"></div>
+<div style="flex:1;font:400 11px 'Inter', sans-serif">{{ c.n }}</div>
+<div style="font:500 9.5px 'Inter', sans-serif;color:{{ c.color }}">{{ c.s }}</div>
+</div>
+</sc-for>
+<div style="margin-top:9px;padding-top:9px;border-top:1px solid rgba(0,0,0,.06);font:400 9.5px/1.5 'Inter', sans-serif;color:oklch(.75 .1 70)">Set A expires GW19 deadline (Sat 2 Jan) — hard constraint, already enforced.</div>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ modeResearch }}">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;overflow:hidden">
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;padding:18px">
+<sc-for list="{{ xiGrid }}" as="c" hint-placeholder-count="11">
+<div onClick="{{ c.open }}" style="border:1px solid rgba(0,0,0,.10);border-left:2px solid {{ c.posColor }};border-radius:18px;background:#FFFFFF;padding:10px 11px;cursor:pointer;transition:border-color .15s" style-hover="border-color:rgba(0,0,0,.35)">
+<div style="display:flex;align-items:baseline;gap:7px">
+<div style="flex:1;min-width:0;font:500 11.5px 'Inter', sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.last }}</div>
+<div style="font:500 9px 'Inter', sans-serif;color:#64748B">{{ c.team }}</div>
+</div>
+<div style="margin-top:7px;display:flex;align-items:flex-end;gap:8px">
+<div style="font:600 19px/1 'Inter', sans-serif">{{ c.xp }}</div>
+<div style="font:400 9px 'Inter', sans-serif;color:#64748B;padding-bottom:2px">±{{ c.sd }}</div>
+</div>
+<div style="margin-top:8px;display:grid;grid-template-columns:repeat(7,1fr);gap:2px;align-items:end;height:26px">
+<sc-for list="{{ c.bars }}" as="b" hint-placeholder-count="7">
+<div title="{{ b.t }}" style="height:{{ b.h }};background:{{ b.c }};border-radius:1px"></div>
+</sc-for>
+</div>
+<div style="margin-top:7px;display:flex;justify-content:space-between;font:400 9px 'Inter', sans-serif;color:#64748B">
+<div>p(start) {{ c.pstart }}</div>
+<div>E[min] {{ c.mins }}</div>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="padding:12px 18px;border-top:1px solid rgba(0,0,0,.06);font:400 10px 'Inter', sans-serif;color:#64748B">bars = per-model xP, left→right: ppg · ep_next · lgbm · bayes · chronos · llm · stack. No motion in this view by design.</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ modeTable }}">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;overflow:auto">
+<table style="width:100%;border-collapse:collapse;font:400 11.5px 'Inter', sans-serif">
+<thead>
+<tr style="background:#FFFFFF">
+<sc-for list="{{ tableCols }}" as="h" hint-placeholder-count="12">
+<th style="text-align:{{ h.a }};padding:10px 12px;font:500 9.5px 'Inter', sans-serif;color:#64748B;letter-spacing:.07em;border-bottom:1px solid rgba(0,0,0,.10);white-space:nowrap">{{ h.t }}</th>
+</sc-for>
+</tr>
+</thead>
+<tbody>
+<sc-for list="{{ tableRows }}" as="r" hint-placeholder-count="14">
+<tr onClick="{{ r.open }}" style="cursor:pointer;background:{{ r.bg }}" style-hover="background:rgba(0,0,0,.04)">
+<td style="padding:8px 12px;border-bottom:1px solid rgba(0,0,0,.04)">
+<div style="display:flex;align-items:center;gap:8px">
+<div style="width:2px;height:15px;background:{{ r.posColor }};border-radius:1px"></div>
+<div style="font:400 11.5px 'Inter', sans-serif">{{ r.name }}</div>
+<sc-if value="{{ r.inSquad }}" hint-placeholder-val="{{ false }}"><div style="font:500 8.5px 'Inter', sans-serif;color:oklch(.8 .12 196);border:1px solid oklch(.45 .09 196);border-radius:18px;padding:0 3px">SQD</div></sc-if>
+</div>
+</td>
+<td style="padding:8px 12px;color:#64748B;border-bottom:1px solid rgba(0,0,0,.04)">{{ r.team }}</td>
+<td style="padding:8px 12px;color:#64748B;border-bottom:1px solid rgba(0,0,0,.04)">{{ r.pos }}</td>
+<td style="padding:8px 12px;text-align:right;color:#1E293B;border-bottom:1px solid rgba(0,0,0,.04)">{{ r.price }}</td>
+<sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="7">
+<td style="padding:8px 12px;text-align:right;color:{{ c.c }};border-bottom:1px solid rgba(0,0,0,.04)">{{ c.v }}</td>
+</sc-for>
+<td style="padding:8px 12px;border-bottom:1px solid rgba(0,0,0,.04);width:96px">
+<div style="position:relative;height:4px;border-radius:14px;background:rgba(0,0,0,.08)">
+<div style="position:absolute;left:0;top:0;bottom:0;width:{{ r.sdW }};background:oklch(.72 .17 330);border-radius:14px"></div>
+</div>
+</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{ isDiff }}">
+<section data-screen-label="Squad diff" style="padding:22px 26px 40px">
+<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:20px">
+<div style="display:flex;align-items:center;gap:9px;padding:6px 12px;border-radius:20px;background:#F1F5F9;border:1px solid rgba(0,0,0,.10)">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B">A</div>
+<sc-for list="{{ chipsA }}" as="a" hint-placeholder-count="7">
+<div onClick="{{ a.go }}" style="padding:4px 9px;border-radius:24px;cursor:pointer;font:500 10.5px 'Inter', sans-serif;background:{{ a.bg }};color:{{ a.fg }};border:1px solid {{ a.bd }}">{{ a.k }}</div>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:9px;padding:6px 12px;border-radius:20px;background:#F1F5F9;border:1px solid rgba(0,0,0,.10)">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B">B</div>
+<sc-for list="{{ chipsB }}" as="a" hint-placeholder-count="7">
+<div onClick="{{ a.go }}" style="padding:4px 9px;border-radius:24px;cursor:pointer;font:500 10.5px 'Inter', sans-serif;background:{{ a.bg }};color:{{ a.fg }};border:1px solid {{ a.bd }}">{{ a.k }}</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<div style="display:flex;gap:14px">
+<div style="display:flex;align-items:center;gap:6px"><div style="width:9px;height:9px;border-radius:14px;background:#CBD5E1"></div><div style="font:400 10.5px 'Inter', sans-serif;color:#64748B">agree {{ nAgree }}</div></div>
+<div style="display:flex;align-items:center;gap:6px"><div style="width:9px;height:9px;border-radius:14px;background:oklch(.72 .13 250)"></div><div style="font:400 10.5px 'Inter', sans-serif;color:#64748B">A only {{ nA }}</div></div>
+<div style="display:flex;align-items:center;gap:6px"><div style="width:9px;height:9px;border-radius:14px;background:oklch(.76 .14 90)"></div><div style="font:400 10.5px 'Inter', sans-serif;color:#64748B">B only {{ nB }}</div></div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px">
+<sc-for list="{{ diffPitches }}" as="p" hint-placeholder-count="2">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:15px">
+<div style="display:flex;align-items:baseline;gap:9px;margin-bottom:12px">
+<div style="font:600 9.5px 'Inter', sans-serif;color:#64748B">{{ p.side }}</div>
+<div style="font:600 13px 'Outfit', sans-serif;flex:1">{{ p.n }}</div>
+<div style="font:600 13px 'Inter', sans-serif">{{ p.xp }}</div>
+<div style="font:400 10px 'Inter', sans-serif;color:#64748B">xP · {{ p.formation }}</div>
+</div>
+<div style="position:relative;width:100%;height:430px;border-radius:20px;overflow:hidden;background:#F8FAFC;border:1px solid rgba(0,0,0,.06);background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.02) 0 9.09%,rgba(255,255,255,0) 9.09% 18.18%)">
+<div style="position:absolute;inset:10px;border:1px solid rgba(0,0,0,.08);border-radius:18px"></div>
+<div style="position:absolute;left:50%;top:50%;width:88px;height:88px;transform:translate(-50%,-50%);border:1px solid rgba(0,0,0,.05);border-radius:50%"></div>
+<sc-for list="{{ p.slots }}" as="c" hint-placeholder-count="11">
+<div style="position:absolute;left:{{ c.x }};top:{{ c.y }};transform:translate(-50%,-50%);transition:left {{ motion }},top {{ motion }}">
+<div onClick="{{ c.open }}" style="width:74px;padding:7px 7px 6px;border-radius:18px;background:{{ c.bg }};border:1px solid {{ c.bd }};cursor:pointer;text-align:center;transition:transform .16s" style-hover="transform:translateY(-3px)">
+<div style="font:600 15px/1 'Inter', sans-serif;color:{{ c.fg }}">{{ c.xp }}</div>
+<div style="margin-top:4px;font:500 9.5px/1.1 'Inter', sans-serif;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.last }}</div>
+<div style="margin-top:2px;font:400 8px 'Inter', sans-serif;color:#64748B">{{ c.team }} · £{{ c.price }}</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="margin-top:18px;border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;overflow:hidden">
+<div style="padding:13px 16px;border-bottom:1px solid rgba(0,0,0,.06);font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em">DIVERGENCES · AND THE CONSTRAINT THAT FORCED THEM</div>
+<sc-for list="{{ divergences }}" as="d" hint-placeholder-count="5">
+<div style="display:grid;grid-template-columns:1fr auto 1fr 86px 1.5fr;gap:14px;align-items:center;padding:11px 16px;border-bottom:1px solid rgba(0,0,0,.04)">
+<div style="text-align:right">
+<div style="font:500 12px 'Inter', sans-serif;color:oklch(.78 .12 250)">{{ d.aName }}</div>
+<div style="font:400 9.5px 'Inter', sans-serif;color:#64748B">{{ d.aMeta }}</div>
+</div>
+<div style="font:400 13px 'Inter', sans-serif;color:#64748B">→</div>
+<div>
+<div style="font:500 12px 'Inter', sans-serif;color:oklch(.82 .13 90)">{{ d.bName }}</div>
+<div style="font:400 9.5px 'Inter', sans-serif;color:#64748B">{{ d.bMeta }}</div>
+</div>
+<div style="font:600 12px 'Inter', sans-serif;color:{{ d.deltaC }};text-align:right">{{ d.delta }}</div>
+<div style="font:400 10.5px/1.4 'Inter', sans-serif;color:#64748B">{{ d.reason }}</div>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{ isHorizon }}">
+<section data-screen-label="Horizon sensitivity" style="padding:22px 26px 40px">
+<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px">
+<div style="display:flex;align-items:center;gap:11px;padding:8px 16px 8px 13px;border-radius:20px;background:#F1F5F9;border:1px solid rgba(0,0,0,.10)">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.06em">PLANNING HORIZON</div>
+<input type="range" min="1" max="8" step="1" value="{{ horizon }}" onChange="{{ setHorizon }}" onInput="{{ setHorizon }}" style="width:260px" />
+<div style="font:600 14px 'Inter', sans-serif;color:oklch(.85 .11 196);min-width:78px">{{ horizonLabel }}</div>
+</div>
+<div style="font:400 11px/1.5 'Inter', sans-serif;color:#64748B;max-width:400px">Every horizon is precomputed in the run payload — dragging never fetches. The XI re-forms continuously; watch which players survive the change.</div>
+</div>
+
+<div style="display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:16px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:14px">xP SURFACE · SQUAD × GAMEWEEK</div>
+<div style="display:grid;grid-template-columns:118px repeat(8,minmax(0,1fr));gap:3px;align-items:center">
+<div></div>
+<sc-for list="{{ gwHeads }}" as="g" hint-placeholder-count="8">
+<div style="text-align:center;font:500 9px 'Inter', sans-serif;color:{{ g.c }}">{{ g.t }}</div>
+</sc-for>
+<sc-for list="{{ heatRows }}" as="r" hint-placeholder-count="15">
+<div style="font:400 10.5px 'Inter', sans-serif;color:{{ r.nameC }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px">{{ r.last }}</div>
+<sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="8">
+<div title="{{ c.t }}" style="height:22px;border-radius:18px;background:{{ c.bg }};border:1px solid {{ c.bd }};display:flex;align-items:center;justify-content:center;font:500 9px 'Inter', sans-serif;color:{{ c.fg }};transition:border-color {{ motion }}">{{ c.v }}</div>
+</sc-for>
+</sc-for>
+</div>
+<div style="margin-top:13px;display:flex;align-items:center;gap:10px">
+<div style="font:400 9.5px 'Inter', sans-serif;color:#64748B">low</div>
+<div style="flex:1;height:5px;border-radius:18px;background:linear-gradient(90deg,#101317,oklch(.45 .08 196),oklch(.82 .13 196))"></div>
+<div style="font:400 9.5px 'Inter', sans-serif;color:#64748B">high</div>
+<div style="margin-left:10px;font:400 9.5px 'Inter', sans-serif;color:#64748B">outlined = in current XI</div>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:16px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:12px">SQUAD xP BY HORIZON</div>
+<svg viewBox="0 0 320 130" style="width:100%;height:auto;display:block">
+<path d="{{ horizArea }}" fill="oklch(.6 .1 196 / .16)"></path>
+<path d="{{ horizLine }}" fill="none" stroke="oklch(.82 .12 196)" stroke-width="1.6" stroke-linejoin="round"></path>
+<line x1="{{ horizMarkX }}" y1="8" x2="{{ horizMarkX }}" y2="112" stroke="#f2f4f7" stroke-width="1" stroke-dasharray="2 3"></line>
+<circle cx="{{ horizMarkX }}" cy="{{ horizMarkY }}" r="3.2" fill="#f2f4f7"></circle>
+<sc-for list="{{ horizTicks }}" as="t" hint-placeholder-count="8">
+<text x="{{ t.x }}" y="126" text-anchor="middle" fill="#6d737f" style="font:400 8px 'Inter', sans-serif">{{ t.t }}</text>
+</sc-for>
+</svg>
+<div style="margin-top:6px;font:400 10px 'Inter', sans-serif;color:#64748B">selected XI, cumulative, bench-weighted</div>
+</div>
+
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:16px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:11px">XI CHURN vs h=1</div>
+<div style="display:flex;align-items:baseline;gap:9px">
+<div style="font:600 30px/1 'Outfit', sans-serif;letter-spacing:-1px">{{ churn }}</div>
+<div style="font:400 11px 'Inter', sans-serif;color:#64748B">slots differ from the one-week optimum</div>
+</div>
+<div style="margin-top:14px;display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ churnRows }}" as="c" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:9px">
+<div style="width:44px;font:500 9px 'Inter', sans-serif;color:{{ c.tagC }}">{{ c.tag }}</div>
+<div style="flex:1;font:400 11px 'Inter', sans-serif">{{ c.last }}</div>
+<div style="font:500 10.5px 'Inter', sans-serif;color:#64748B">{{ c.v }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{ isLab }}">
+<section data-screen-label="Model Lab" style="padding:22px 26px 40px">
+<div style="display:flex;padding:3px;border-radius:20px;background:#F1F5F9;border:1px solid rgba(0,0,0,.10);gap:2px;width:fit-content;margin-bottom:20px">
+<sc-for list="{{ labTabs }}" as="t" hint-placeholder-count="3">
+<div onClick="{{ t.go }}" style="padding:6px 14px;border-radius:14px;cursor:pointer;font:500 11.5px 'Inter', sans-serif;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</div>
+</sc-for>
+</div>
+
+<sc-if value="{{ labIsBoard }}" hint-placeholder-val="{{ true }}">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;overflow:auto">
+<table style="width:100%;border-collapse:collapse">
+<thead><tr style="background:#FFFFFF">
+<sc-for list="{{ boardCols }}" as="h" hint-placeholder-count="10">
+<th style="text-align:{{ h.a }};padding:10px 13px;font:500 9.5px 'Inter', sans-serif;color:#64748B;letter-spacing:.07em;border-bottom:1px solid rgba(0,0,0,.10);white-space:nowrap">{{ h.t }}</th>
+</sc-for>
+</tr></thead>
+<tbody>
+<sc-for list="{{ boardRows }}" as="r" hint-placeholder-count="7">
+<tr style="background:{{ r.bg }}">
+<td style="padding:11px 13px;border-bottom:1px solid rgba(0,0,0,.04)">
+<div style="display:flex;align-items:center;gap:9px">
+<div style="width:3px;height:17px;border-radius:14px;background:{{ r.color }}"></div>
+<div>
+<div style="font:500 12px 'Inter', sans-serif">{{ r.n }}</div>
+<div style="font:400 9px 'Inter', sans-serif;color:#64748B">{{ r.t }}</div>
+</div>
+</div>
+</td>
+<sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="8">
+<td style="padding:11px 13px;text-align:right;font:500 11.5px 'Inter', sans-serif;color:{{ c.c }};border-bottom:1px solid rgba(0,0,0,.04);white-space:nowrap">{{ c.v }}</td>
+</sc-for>
+</tr>
+</sc-for>
+</tbody>
+</table>
+<div style="padding:12px 14px;border-top:1px solid rgba(0,0,0,.06);display:flex;gap:22px;flex-wrap:wrap;font:400 10px 'Inter', sans-serif;color:#64748B">
+<div>prediction quality: ρ (spearman, in position×price band) · CRPS · Brier(start)</div>
+<div>decision quality: season pts · pts/hit · turnover</div>
+<div style="color:oklch(.75 .1 70)">baselines must be beaten before anything downstream matters</div>
+</div>
+</div>
+
+<div style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:16px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:12px">CALIBRATION · PREDICTED vs REALISED</div>
+<svg viewBox="0 0 300 220" style="width:100%;height:auto;display:block">
+<line x1="34" y1="196" x2="288" y2="196" stroke="rgba(0,0,0,.18)"></line>
+<line x1="34" y1="14" x2="34" y2="196" stroke="rgba(0,0,0,.18)"></line>
+<line x1="34" y1="196" x2="288" y2="14" stroke="rgba(0,0,0,.25)" stroke-dasharray="3 3"></line>
+<sc-for list="{{ calLines }}" as="l" hint-placeholder-count="3">
+<path d="{{ l.d }}" fill="none" stroke="{{ l.c }}" stroke-width="1.6" stroke-linejoin="round"></path>
+</sc-for>
+<sc-for list="{{ calDots }}" as="p" hint-placeholder-count="20">
+<circle cx="{{ p.x }}" cy="{{ p.y }}" r="2.3" fill="{{ p.c }}"></circle>
+</sc-for>
+<text x="160" y="214" text-anchor="middle" fill="#6d737f" style="font:400 8.5px 'Inter', sans-serif">predicted xP decile</text>
+</svg>
+<div style="margin-top:9px;display:flex;gap:14px;flex-wrap:wrap">
+<sc-for list="{{ calLegend }}" as="l" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:6px"><div style="width:14px;height:2px;background:{{ l.c }}"></div><div style="font:400 10px 'Inter', sans-serif;color:#64748B">{{ l.n }} · ECE {{ l.ece }}</div></div>
+</sc-for>
+</div>
+</div>
+
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:16px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:12px">MULTI-METRIC COMPARISON</div>
+<svg viewBox="0 0 300 220" style="width:100%;height:auto;display:block">
+<sc-for list="{{ radarRings }}" as="r" hint-placeholder-count="4">
+<polygon points="{{ r.p }}" fill="none" stroke="rgba(0,0,0,.08)"></polygon>
+</sc-for>
+<sc-for list="{{ radarAxes }}" as="a" hint-placeholder-count="5">
+<line x1="150" y1="112" x2="{{ a.x }}" y2="{{ a.y }}" stroke="rgba(0,0,0,.08)"></line>
+<text x="{{ a.lx }}" y="{{ a.ly }}" text-anchor="{{ a.anchor }}" fill="#7d838f" style="font:400 8.5px 'Inter', sans-serif">{{ a.t }}</text>
+</sc-for>
+<sc-for list="{{ radarShapes }}" as="s" hint-placeholder-count="3">
+<polygon points="{{ s.p }}" fill="{{ s.fill }}" stroke="{{ s.c }}" stroke-width="1.5"></polygon>
+</sc-for>
+</svg>
+<div style="margin-top:9px;display:flex;gap:14px;flex-wrap:wrap">
+<sc-for list="{{ radarLegend }}" as="l" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:6px"><div style="width:9px;height:9px;border-radius:14px;background:{{ l.c }}"></div><div style="font:400 10px 'Inter', sans-serif;color:#64748B">{{ l.n }}</div></div>
+</sc-for>
+</div>
+</div>
+
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:16px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:12px">RESIDUALS · STACK, h=1</div>
+<svg viewBox="0 0 300 200" style="width:100%;height:auto;display:block">
+<sc-for list="{{ residBars }}" as="b" hint-placeholder-count="15">
+<rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" fill="{{ b.c }}" rx="1"></rect>
+</sc-for>
+<line x1="16" y1="172" x2="288" y2="172" stroke="rgba(0,0,0,.18)"></line>
+<line x1="152" y1="14" x2="152" y2="172" stroke="rgba(0,0,0,.30)" stroke-dasharray="2 3"></line>
+<text x="152" y="190" text-anchor="middle" fill="#6d737f" style="font:400 8.5px 'Inter', sans-serif">actual − predicted</text>
+</svg>
+<div style="margin-top:6px;font:400 10px/1.5 'Inter', sans-serif;color:#64748B">Right tail is the zero-inflation problem: hauls are under-predicted by construction. Judge with CRPS, not MAE.</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ labIsReplay }}">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:18px">
+<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em">COUNTERFACTUAL REPLAY · SHARED PRICE PATH</div>
+<div style="flex:1"></div>
+<div style="display:flex;align-items:center;gap:11px;padding:6px 13px;border-radius:18px;background:#FFFFFF;border:1px solid rgba(0,0,0,.10)">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B">GW</div>
+<input type="range" min="1" max="38" step="1" value="{{ replayGw }}" onChange="{{ setReplay }}" onInput="{{ setReplay }}" style="width:240px" />
+<div style="font:600 12px 'Inter', sans-serif;color:oklch(.85 .11 196);min-width:24px">{{ replayGw }}</div>
+</div>
+</div>
+<svg viewBox="0 0 900 300" style="width:100%;height:auto;display:block">
+<sc-for list="{{ replayGrid }}" as="g" hint-placeholder-count="5">
+<line x1="46" y1="{{ g.y }}" x2="884" y2="{{ g.y }}" stroke="rgba(0,0,0,.05)"></line>
+<text x="40" y="{{ g.ty }}" text-anchor="end" fill="#6d737f" style="font:400 9px 'Inter', sans-serif">{{ g.t }}</text>
+</sc-for>
+<sc-for list="{{ replayLines }}" as="l" hint-placeholder-count="4">
+<path d="{{ l.d }}" fill="none" stroke="{{ l.c }}" stroke-width="{{ l.w }}" stroke-linejoin="round"></path>
+</sc-for>
+<line x1="{{ replayX }}" y1="10" x2="{{ replayX }}" y2="270" stroke="#f2f4f7" stroke-width="1"></line>
+<sc-for list="{{ replayDots }}" as="d" hint-placeholder-count="4">
+<circle cx="{{ replayX }}" cy="{{ d.y }}" r="3.4" fill="{{ d.c }}" stroke="#08090b" stroke-width="1.2"></circle>
+<text x="{{ d.tx }}" y="{{ d.ty }}" fill="{{ d.c }}" style="font:500 10px 'Inter', sans-serif">{{ d.t }}</text>
+</sc-for>
+<text x="465" y="292" text-anchor="middle" fill="#6d737f" style="font:400 9px 'Inter', sans-serif">gameweek · cumulative points, optimizer in the loop</text>
+</svg>
+<div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+<sc-for list="{{ replayCards }}" as="c" hint-placeholder-count="4">
+<div style="border:1px solid rgba(0,0,0,.08);border-left:2px solid {{ c.color }};border-radius:18px;background:#FFFFFF;padding:12px 13px">
+<div style="font:500 11px 'Inter', sans-serif">{{ c.n }}</div>
+<div style="margin-top:7px;font:600 21px/1 'Inter', sans-serif">{{ c.pts }}</div>
+<div style="margin-top:6px;display:flex;justify-content:space-between;font:400 9.5px 'Inter', sans-serif;color:#64748B">
+<div>hits {{ c.hits }}</div><div>turnover {{ c.to }}</div>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:14px;padding-top:13px;border-top:1px solid rgba(0,0,0,.06);font:400 10.5px/1.6 'Inter', sans-serif;color:#64748B">Scrub the timeline and the squad grid below mutates in place — one seekable timeline, no playback state. Note GW14–17: the GBM arm is more accurate but loses to the stack on realised points because it churns.</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ labIsWhatIf }}">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:18px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:14px">RUN CONFIGURATION</div>
+<sc-for list="{{ runConfig }}" as="r" hint-placeholder-count="7">
+<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid rgba(0,0,0,.05)">
+<div style="font:400 11px 'Inter', sans-serif;color:#64748B">{{ r.k }}</div>
+<div style="font:500 11px 'Inter', sans-serif;color:#1E293B;text-align:right">{{ r.v }}</div>
+</div>
+</sc-for>
+<div style="margin-top:14px;font:400 10px/1.5 'Inter', sans-serif;color:oklch(.75 .1 70)">Everything on screen is reproducible from this run_id alone.</div>
+</div>
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:18px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:14px">STACK WEIGHTS · LEARNED PER HORIZON × POSITION</div>
+<div style="display:grid;grid-template-columns:96px repeat(4,minmax(0,1fr));gap:4px;align-items:center">
+<div></div>
+<sc-for list="{{ weightCols }}" as="c" hint-placeholder-count="4">
+<div style="text-align:center;font:500 9px 'Inter', sans-serif;color:#64748B">{{ c }}</div>
+</sc-for>
+<sc-for list="{{ weightRows }}" as="r" hint-placeholder-count="7">
+<div style="font:400 10px 'Inter', sans-serif;color:#64748B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.n }}</div>
+<sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="4">
+<div style="height:20px;border-radius:18px;background:{{ c.bg }};display:flex;align-items:center;justify-content:center;font:500 9px 'Inter', sans-serif;color:{{ c.fg }}">{{ c.v }}</div>
+</sc-for>
+</sc-for>
+</div>
+<div style="margin-top:12px;font:400 10px/1.5 'Inter', sans-serif;color:#64748B">Out-of-fold, expanding window, purged at the GW boundary. Chronos earns weight only at h≥4 and only for defenders.</div>
+</div>
+</div>
+</sc-if>
+</section>
+</sc-if>
+
+<sc-if value="{{ isPlanner }}">
+<section data-screen-label="Transfer planner" style="padding:22px 26px 40px">
+<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px">
+<div style="padding:8px 14px;border-radius:20px;background:#F1F5F9;border:1px solid rgba(0,0,0,.10);font:400 11px 'Inter', sans-serif;color:#64748B">Solved over <span style="color:#0F172A">GW23→30</span>, executing <span style="color:oklch(.85 .11 196)">GW23 only</span>, re-solve next week</div>
+<div style="padding:8px 14px;border-radius:20px;background:#F1F5F9;border:1px solid rgba(0,0,0,.10);font:400 11px 'Inter', sans-serif;color:#64748B">FT bank <span style="color:#0F172A">2 / 5</span></div>
+<div style="padding:8px 14px;border-radius:20px;background:#F1F5F9;border:1px solid rgba(0,0,0,.10);font:400 11px 'Inter', sans-serif;color:#64748B">ITB <span style="color:#0F172A">£1.4m</span></div>
+<div style="padding:8px 14px;border-radius:20px;background:oklch(.22 .05 60);border:1px solid oklch(.4 .09 60);font:400 11px 'Inter', sans-serif;color:oklch(.85 .1 75)">Hits taken in plan: <span style="font-weight:600">−4</span> (GW27)</div>
+</div>
+
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;overflow:auto">
+<div style="min-width:820px">
+<div style="display:grid;grid-template-columns:132px repeat(8,minmax(0,1fr))">
+<div style="padding:12px 14px;border-bottom:1px solid rgba(0,0,0,.10);background:#FFFFFF"></div>
+<sc-for list="{{ planHeads }}" as="h" hint-placeholder-count="8">
+<div style="padding:12px 10px;border-bottom:1px solid rgba(0,0,0,.10);border-left:1px solid rgba(0,0,0,.05);background:{{ h.bg }}">
+<div style="font:600 11px 'Inter', sans-serif;color:{{ h.fg }}">{{ h.gw }}</div>
+<div style="margin-top:3px;font:400 9px 'Inter', sans-serif;color:#64748B">{{ h.note }}</div>
+</div>
+</sc-for>
+<sc-for list="{{ planRows }}" as="r" hint-placeholder-count="4">
+<div style="padding:12px 14px;border-bottom:1px solid rgba(0,0,0,.04);font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.06em;background:#FFFFFF">{{ r.label }}</div>
+<sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="8">
+<div style="padding:10px;border-bottom:1px solid rgba(0,0,0,.04);border-left:1px solid rgba(0,0,0,.05);min-height:56px">
+<sc-if value="{{ c.has }}" hint-placeholder-val="{{ false }}">
+<div style="padding:6px 8px;border-radius:14px;background:{{ c.bg }};border:1px solid {{ c.bd }}">
+<div style="font:500 10.5px 'Inter', sans-serif;color:{{ c.fg }}">{{ c.t }}</div>
+<div style="margin-top:2px;font:400 9px 'Inter', sans-serif;color:#64748B">{{ c.sub }}</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div style="margin-top:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+<sc-if value="{{ true }}" hint-placeholder-val="{{ true }}">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:16px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:12px">PLAN VALUE DECOMPOSITION</div>
+<sc-for list="{{ planValue }}" as="p" hint-placeholder-count="5">
+<div style="padding:7px 0">
+<div style="display:flex;justify-content:space-between;font:400 11px 'Inter', sans-serif;color:#1E293B">
+<div>{{ p.k }}</div><div style="font:500 11px 'Inter', sans-serif;color:{{ p.c }}">{{ p.v }}</div>
+</div>
+<div style="margin-top:5px;height:4px;border-radius:14px;background:rgba(0,0,0,.06);position:relative">
+<div style="position:absolute;left:{{ p.l }};top:0;bottom:0;width:{{ p.w }};background:{{ p.c }};border-radius:14px"></div>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:16px">
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:12px">BINDING CONSTRAINTS</div>
+<sc-for list="{{ binding }}" as="b" hint-placeholder-count="5">
+<div style="display:flex;gap:10px;padding:8px 0;border-top:1px solid rgba(0,0,0,.05)">
+<div style="width:5px;height:5px;border-radius:50%;background:{{ b.c }};margin-top:5px;flex:none"></div>
+<div>
+<div style="font:500 11px 'Inter', sans-serif;color:#1E293B">{{ b.k }}</div>
+<div style="margin-top:2px;font:400 10px/1.45 'Inter', sans-serif;color:#64748B">{{ b.v }}</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{ isLog }}">
+<section data-screen-label="Decision log" style="padding:22px 26px 40px;max-width:1080px">
+<div style="font:400 11.5px/1.6 'Inter', sans-serif;color:#64748B;max-width:560px;margin-bottom:20px">Every week the system persists what it recommended and why, before the result is known. Six weeks in, this is the only artefact that tells you whether to trust it.</div>
+<sc-for list="{{ logEntries }}" as="e" hint-placeholder-count="6">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:16px 18px;margin-bottom:12px">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<div style="font:600 13px 'Outfit', sans-serif">{{ e.gw }}</div>
+<div style="font:400 10px 'Inter', sans-serif;color:#64748B">{{ e.run }}</div>
+<div style="flex:1"></div>
+<div style="font:500 10.5px 'Inter', sans-serif;color:#64748B">pred {{ e.pred }}</div>
+<div style="font:600 11.5px 'Inter', sans-serif;color:{{ e.c }}">actual {{ e.act }}</div>
+<div style="padding:2px 7px;border-radius:10px;font:500 9.5px 'Inter', sans-serif;color:{{ e.c }};border:1px solid {{ e.c }}">{{ e.tag }}</div>
+</div>
+<div style="margin-top:11px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px">
+<div>
+<div style="font:500 9px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:5px">DECISION</div>
+<div style="font:400 11px/1.5 'Inter', sans-serif;color:#1E293B">{{ e.decision }}</div>
+</div>
+<div>
+<div style="font:500 9px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:5px">RATIONALE</div>
+<div style="font:400 11px/1.5 'Inter', sans-serif;color:#a8aeb8">{{ e.why }}</div>
+</div>
+<div>
+<div style="font:500 9px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:5px">POST-HOC</div>
+<div style="font:400 11px/1.5 'Inter', sans-serif;color:#a8aeb8">{{ e.post }}</div>
+</div>
+</div>
+</div>
+</sc-for>
+</section>
+</sc-if>
+
+<sc-if value="{{ isHealth }}">
+<section data-screen-label="Data health" style="padding:22px 26px 40px">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:18px">
+<sc-for list="{{ healthStats }}" as="s" hint-placeholder-count="4">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;padding:15px 16px">
+<div style="font:500 9.5px 'Inter', sans-serif;color:#64748B;letter-spacing:.08em">{{ s.k }}</div>
+<div style="margin-top:9px;font:600 24px/1 'Outfit', sans-serif;letter-spacing:-.6px;color:{{ s.c }}">{{ s.v }}</div>
+<div style="margin-top:6px;font:400 10px 'Inter', sans-serif;color:#64748B">{{ s.sub }}</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px">
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;overflow:hidden">
+<div style="padding:13px 16px;border-bottom:1px solid rgba(0,0,0,.06);font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em">SNAPSHOTS · APPEND-ONLY, captured_at</div>
+<sc-for list="{{ snapshots }}" as="s" hint-placeholder-count="6">
+<div style="display:grid;grid-template-columns:1.3fr 1fr .8fr .9fr;gap:10px;padding:10px 16px;border-bottom:1px solid rgba(0,0,0,.04);align-items:center">
+<div style="font:400 11px 'Inter', sans-serif;color:#1E293B">{{ s.src }}</div>
+<div style="font:400 10px 'Inter', sans-serif;color:#64748B">{{ s.at }}</div>
+<div style="font:400 10px 'Inter', sans-serif;color:#64748B;text-align:right">{{ s.rows }}</div>
+<div style="font:500 9.5px 'Inter', sans-serif;color:{{ s.c }};text-align:right">{{ s.st }}</div>
+</div>
+</sc-for>
+</div>
+
+<div style="border:1px solid rgba(0,0,0,.10);border-radius:24px;background:#FFFFFF;overflow:hidden">
+<div style="padding:13px 16px;border-bottom:1px solid rgba(0,0,0,.06);font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em">INTEGRITY GATES · BLOCK THE PIPELINE ON FAIL</div>
+<sc-for list="{{ gates }}" as="g" hint-placeholder-count="7">
+<div style="display:flex;gap:11px;padding:11px 16px;border-bottom:1px solid rgba(0,0,0,.04);align-items:flex-start">
+<div style="width:14px;height:14px;border-radius:10px;background:{{ g.bg }};border:1px solid {{ g.bd }};display:flex;align-items:center;justify-content:center;font:600 9px 'Inter', sans-serif;color:{{ g.fg }};flex:none;margin-top:1px">{{ g.icon }}</div>
+<div>
+<div style="font:400 11px 'Inter', sans-serif;color:#1E293B">{{ g.k }}</div>
+<div style="margin-top:2px;font:400 10px/1.45 'Inter', sans-serif;color:#64748B">{{ g.v }}</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="margin-top:18px;border:1px solid oklch(.4 .09 60);border-radius:24px;background:oklch(.19 .04 60);padding:16px 18px">
+<div style="font:600 11.5px 'Outfit', sans-serif;color:oklch(.88 .1 80);margin-bottom:7px">2026/27 ruleset deltas the simulator must honour</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px">
+<sc-for list="{{ ruleDeltas }}" as="r" hint-placeholder-count="5">
+<div style="font:400 10.5px/1.55 'Inter', sans-serif;color:oklch(.85 .05 80)"><span style="font:500 10px 'Inter', sans-serif;color:oklch(.9 .1 80)">{{ r.k }}</span> — {{ r.v }}</div>
+</sc-for>
+</div>
+</div>
+</section>
+</sc-if>
+
+<sc-if value="{{ isBrief }}">
+<section data-screen-label="Brief" style="padding:26px;max-width:820px">
+<div style="font:400 12px/1.75 'Inter', sans-serif;color:#a8aeb8">
+<div style="font:600 19px 'Outfit', sans-serif;color:#0F172A;letter-spacing:-.4px;margin-bottom:14px">Design system &amp; assumptions</div>
+<sc-for list="{{ brief }}" as="b" hint-placeholder-count="8">
+<div style="padding:13px 0;border-top:1px solid rgba(0,0,0,.08)">
+<div style="font:500 11px 'Inter', sans-serif;color:oklch(.8 .11 196);letter-spacing:.05em;margin-bottom:5px">{{ b.k }}</div>
+<div>{{ b.v }}</div>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-if>
+
+</main>
+</div>
+
+<sc-if value="{{ sel }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:60;display:flex;justify-content:flex-end">
+<div onClick="{{ closeSel }}" style="position:absolute;inset:0;background:rgba(4,5,7,.66);backdrop-filter:blur(3px)"></div>
+<div style="position:relative;width:min(560px,100%);height:100%;overflow-y:auto;background:#0a0c0f;border-left:1px solid rgba(0,0,0,.15);box-shadow:-30px 0 70px -30px rgba(0,0,0,.9);animation:dcfade .22s ease-out">
+<div style="position:sticky;top:0;background:rgba(10,12,15,.94);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,.08);padding:18px 22px;display:flex;align-items:flex-start;gap:14px">
+<div style="width:3px;height:44px;border-radius:14px;background:{{ sel.posColor }}"></div>
+<div style="flex:1">
+<div style="font:600 17px 'Outfit', sans-serif;letter-spacing:-.3px">{{ sel.name }}</div>
+<div style="margin-top:3px;font:400 10.5px 'Inter', sans-serif;color:#64748B">{{ sel.meta }}</div>
+</div>
+<div style="text-align:right">
+<div style="font:600 24px/1 'Inter', sans-serif;color:#0F172A">{{ sel.xp }}</div>
+<div style="margin-top:3px;font:400 9.5px 'Inter', sans-serif;color:#64748B">xP {{ sel.hLabel }}</div>
+</div>
+<div onClick="{{ closeSel }}" style="cursor:pointer;font:400 16px 'Inter', sans-serif;color:#64748B;padding:0 4px" style-hover="color:#0F172A">×</div>
+</div>
+
+<div style="padding:20px 22px 40px;display:flex;flex-direction:column;gap:22px">
+
+<div>
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:11px">DECOMPOSITION · WHERE THE xP COMES FROM</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:9px">
+<sc-for list="{{ sel.decomp }}" as="d" hint-placeholder-count="5">
+<div style="border:1px solid rgba(0,0,0,.08);border-radius:20px;background:#FFFFFF;padding:11px 12px">
+<div style="font:400 9px 'Inter', sans-serif;color:#64748B">{{ d.k }}</div>
+<div style="margin-top:6px;font:600 16px/1 'Inter', sans-serif;color:#0F172A">{{ d.v }}</div>
+<div style="margin-top:4px;font:400 9px 'Inter', sans-serif;color:#64748B">{{ d.sub }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div>
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:11px">POINTS DISTRIBUTION · QUANTILE FAN, NEXT 8 GW</div>
+<div style="border:1px solid rgba(0,0,0,.08);border-radius:10px;background:#FFFFFF;padding:13px">
+<svg viewBox="0 0 500 190" style="width:100%;height:auto;display:block">
+<path d="{{ sel.fan90 }}" fill="oklch(.6 .1 196 / .13)"></path>
+<path d="{{ sel.fan50 }}" fill="oklch(.65 .11 196 / .22)"></path>
+<path d="{{ sel.median }}" fill="none" stroke="oklch(.85 .12 196)" stroke-width="1.8" stroke-linejoin="round"></path>
+<sc-for list="{{ sel.fanTicks }}" as="t" hint-placeholder-count="8">
+<line x1="{{ t.x }}" y1="160" x2="{{ t.x }}" y2="164" stroke="rgba(0,0,0,.25)"></line>
+<text x="{{ t.x }}" y="178" text-anchor="middle" fill="#6d737f" style="font:400 9px 'Inter', sans-serif">{{ t.t }}</text>
+<text x="{{ t.x }}" y="18" text-anchor="middle" fill="{{ t.fdrC }}" style="font:500 9px 'Inter', sans-serif">{{ t.fdr }}</text>
+</sc-for>
+<line x1="30" y1="160" x2="486" y2="160" stroke="rgba(0,0,0,.18)"></line>
+</svg>
+<div style="margin-top:8px;font:400 9.5px 'Inter', sans-serif;color:#64748B">bands: p10–p90 outer, p25–p75 inner · fixture difficulty above axis</div>
+</div>
+</div>
+
+<div>
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:11px">MINUTES · p(appear) × E[minutes | appear]</div>
+<div style="border:1px solid rgba(0,0,0,.08);border-radius:10px;background:#FFFFFF;padding:14px">
+<div style="display:flex;align-items:flex-end;gap:5px;height:74px">
+<sc-for list="{{ sel.minsBins }}" as="m" hint-placeholder-count="10">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:5px;height:100%">
+<div style="width:100%;height:{{ m.h }};background:{{ m.c }};border-radius:14px 2px 0 0;transition:height {{ motion }}"></div>
+<div style="font:400 8px 'Inter', sans-serif;color:#64748B">{{ m.t }}</div>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:12px;padding-top:11px;border-top:1px solid rgba(0,0,0,.06);display:flex;gap:20px;flex-wrap:wrap">
+<sc-for list="{{ sel.minsStats }}" as="s" hint-placeholder-count="3">
+<div><div style="font:400 9px 'Inter', sans-serif;color:#64748B">{{ s.k }}</div><div style="margin-top:3px;font:600 12px 'Inter', sans-serif;color:{{ s.c }}">{{ s.v }}</div></div>
+</sc-for>
+</div>
+<div style="margin-top:11px;padding:9px 11px;border-radius:32px;background:#101318;border:1px solid rgba(0,0,0,.06);font:400 10px/1.5 'Inter', sans-serif;color:#a8aeb8"><span style="font:500 9.5px 'Inter', sans-serif;color:oklch(.8 .11 196)">LLM ARM</span> {{ sel.llmNote }}</div>
+</div>
+</div>
+
+<div>
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:11px">PER-90 RATES · POSTERIOR MEAN</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ sel.per90 }}" as="p" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:11px">
+<div style="width:106px;font:400 10.5px 'Inter', sans-serif;color:#64748B">{{ p.k }}</div>
+<div style="flex:1;height:6px;border-radius:18px;background:rgba(0,0,0,.06);position:relative">
+<div style="position:absolute;left:0;top:0;bottom:0;width:{{ p.w }};background:{{ p.c }};border-radius:18px"></div>
+<div style="position:absolute;left:{{ p.lo }};right:{{ p.hi }};top:-2px;bottom:-2px;border-left:1px solid rgba(255,255,255,.3);border-right:1px solid rgba(255,255,255,.3)"></div>
+</div>
+<div style="width:52px;text-align:right;font:500 10.5px 'Inter', sans-serif;color:#1E293B">{{ p.v }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div>
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:11px">SHAP ATTRIBUTION · LIGHTGBM, h=1</div>
+<div style="border:1px solid rgba(0,0,0,.08);border-radius:10px;background:#FFFFFF;padding:14px">
+<div style="display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ sel.shap }}" as="s" hint-placeholder-count="8">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:132px;font:400 10px 'Inter', sans-serif;color:#a8aeb8;text-align:right">{{ s.k }}</div>
+<div style="flex:1;position:relative;height:13px">
+<div style="position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(0,0,0,.22)"></div>
+<div style="position:absolute;left:{{ s.l }};width:{{ s.w }};top:2px;bottom:2px;background:{{ s.c }};border-radius:14px"></div>
+</div>
+<div style="width:42px;font:500 10px 'Inter', sans-serif;color:{{ s.c }}">{{ s.v }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div>
+<div style="font:500 10px 'Inter', sans-serif;color:#64748B;letter-spacing:.09em;margin-bottom:11px">PER-MODEL SPREAD · h={{ horizon }}</div>
+<div style="display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ sel.models }}" as="m" hint-placeholder-count="7">
+<div style="display:flex;align-items:center;gap:11px">
+<div style="width:3px;height:15px;border-radius:14px;background:{{ m.c }}"></div>
+<div style="width:120px;font:400 10.5px 'Inter', sans-serif;color:#1E293B">{{ m.n }}</div>
+<div style="flex:1;height:6px;border-radius:18px;background:rgba(0,0,0,.05);position:relative">
+<div style="position:absolute;left:{{ m.x }};top:-3px;width:2px;height:12px;background:{{ m.c }};border-radius:1px"></div>
+</div>
+<div style="width:38px;text-align:right;font:500 10.5px 'Inter', sans-serif;color:#1E293B">{{ m.v }}</div>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:11px;font:400 10px/1.55 'Inter', sans-serif;color:#64748B">{{ sel.spreadNote }}</div>
+</div>
+
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ palette }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:80;display:flex;align-items:flex-start;justify-content:center;padding-top:14vh">
+<div onClick="{{ closePalette }}" style="position:absolute;inset:0;background:rgba(4,5,7,.7);backdrop-filter:blur(4px)"></div>
+<div style="position:relative;width:min(560px,92vw);border-radius:28px;border:1px solid rgba(0,0,0,.18);background:#F1F5F9;box-shadow:0 40px 90px -30px rgba(0,0,0,.95);overflow:hidden;animation:dcfade .16s ease-out">
+<div style="padding:14px 17px;border-bottom:1px solid rgba(0,0,0,.08);display:flex;align-items:center;gap:11px">
+<div style="font:400 13px 'Inter', sans-serif;color:#64748B">›</div>
+<input value="{{ q }}" onChange="{{ setQ }}" onInput="{{ setQ }}" placeholder="Jump to model, player, gameweek…" style="flex:1;background:transparent;border:none;outline:none;color:#0F172A;font:400 13.5px 'Inter', sans-serif" />
+<div style="font:500 9.5px 'Inter', sans-serif;color:#64748B;border:1px solid rgba(0,0,0,.18);border-radius:10px;padding:1px 4px">ESC</div>
+</div>
+<div style="max-height:44vh;overflow-y:auto;padding:7px">
+<sc-for list="{{ paletteItems }}" as="p" hint-placeholder-count="7">
+<div onClick="{{ p.go }}" style="display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:32px;cursor:pointer" style-hover="background:rgba(0,0,0,.06)">
+<div style="width:19px;height:19px;border-radius:24px;background:{{ p.bg }};display:flex;align-items:center;justify-content:center;font:600 8.5px 'Inter', sans-serif;color:{{ p.fg }}">{{ p.icon }}</div>
+<div style="flex:1;font:400 12.5px 'Inter', sans-serif">{{ p.label }}</div>
+<div style="font:400 9.5px 'Inter', sans-serif;color:#64748B">{{ p.kind }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1560,&quot;height&quot;:1000}}">
+class Component extends DCLogic {
+  state = { view:'pitch', pitchMode:'aesthetic', horizon:4, mA:'lgbm', mB:'ens',
+            active:'ens', research:false, palette:false, q:'', selId:null, replayGw:23, labTab:'board' };
+
+  TEAMS = {ARS:'Arsenal',LIV:'Liverpool',MCI:'Man City',CHE:'Chelsea',TOT:'Tottenham',NEW:'Newcastle',MUN:'Man Utd',AVL:'Aston Villa',BHA:'Brighton',BOU:'Bournemouth',CRY:'Crystal Palace',EVE:'Everton',FUL:'Fulham',NFO:"Nott'm Forest",WHU:'West Ham',BRE:'Brentford',WOL:'Wolves',LEE:'Leeds',BUR:'Burnley',SUN:'Sunderland'};
+
+  MODELS = [
+    {k:'ppg', n:'Season PPG', t:'baseline', sp:0.34, c:'#6b7280'},
+    {k:'epnext', n:'FPL ep_next', t:'baseline · API', sp:0.30, c:'#8b919c'},
+    {k:'lgbm', n:'LightGBM-q', t:'gbm · decomposed', sp:0.15, c:'oklch(.75 .12 160)'},
+    {k:'bayes', n:'Hier. Bayes', t:'numpyro', sp:0.20, c:'oklch(.72 .11 250)'},
+    {k:'chronos', n:'Chronos-2', t:'tsfm · team strength', sp:0.42, c:'oklch(.74 .13 300)'},
+    {k:'llm', n:'LLM minutes', t:'agent · brier-scored', sp:0.26, c:'oklch(.78 .13 75)'},
+    {k:'ens', n:'Stack (per-h)', t:'ensemble', sp:0.11, c:'oklch(.84 .12 196)'}
+  ];
+
+  POS = {GK:'oklch(.78 .13 75)', DEF:'oklch(.72 .11 240)', MID:'oklch(.75 .12 160)', FWD:'oklch(.74 .14 25)'};
+
+  RAW = [
+    ['David Raya','ARS','GK',5.6,4.1],['Robert Sánchez','CHE','GK',5.1,3.7],
+    ['Đorđe Petrović','BOU','GK',4.7,3.5],['Bart Verbruggen','BHA','GK',4.6,3.3],
+    ['Gabriel Magalhães','ARS','DEF',6.4,5.0],['William Saliba','ARS','DEF',6.1,4.6],
+    ['Virgil van Dijk','LIV','DEF',6.4,4.4],['Joško Gvardiol','MCI','DEF',6.2,4.7],
+    ['Marc Cucurella','CHE','DEF',6.0,4.4],['Jurriën Timber','ARS','DEF',5.9,4.5],
+    ['Daniel Muñoz','CRY','DEF',5.7,4.3],['Miloš Kerkez','LIV','DEF',5.5,4.0],
+    ['Dan Burn','NEW','DEF',4.9,3.6],['Joachim Andersen','FUL','DEF',4.7,3.5],
+    ['Mohamed Salah','LIV','MID',14.3,7.2],['Cole Palmer','CHE','MID',10.7,6.3],
+    ['Bukayo Saka','ARS','MID',10.3,6.1],['Bryan Mbeumo','MUN','MID',8.4,5.4],
+    ['Antoine Semenyo','BOU','MID',8.1,5.6],['Cody Gakpo','LIV','MID',7.7,4.9],
+    ['Morgan Rogers','AVL','MID',7.5,4.8],['Declan Rice','ARS','MID',6.7,4.4],
+    ['Jarrod Bowen','WHU','MID',6.9,4.4],['Mohammed Kudus','TOT','MID',6.5,4.1],
+    ['Anthony Elanga','NEW','MID',5.9,3.9],['Erling Haaland','MCI','FWD',15.1,7.7],
+    ['Alexander Isak','LIV','FWD',10.5,5.9],['Ollie Watkins','AVL','FWD',9.1,5.5],
+    ['Hugo Ekitiké','LIV','FWD',8.9,5.2],['Yoane Wissa','NEW','FWD',7.1,4.5],
+    ['Igor Thiago','BRE','FWD',6.3,4.3],['Chris Wood','NFO','FWD',6.6,4.3],
+    ['Alex Palmer','BUR','GK',4.1,2.9],['Nathan Wood','SUN','DEF',4.1,2.7],
+    ['Axel Disasi','WOL','DEF',4.2,2.9],['Lewis Miley','NEW','MID',4.5,3.1]
+  ];
+
+  SQUAD = ['đorđe-petrović','alex-palmer','daniel-muñoz','miloš-kerkez','dan-burn','nathan-wood','axel-disasi','mohamed-salah','morgan-rogers','anthony-elanga','mohammed-kudus','lewis-miley','erling-haaland','igor-thiago','chris-wood'];
+
+  FORMS = [[3,4,3],[3,5,2],[4,3,3],[4,4,2],[4,5,1],[5,3,2],[5,4,1]];
+
+  hash(s){let x=2166136261;for(let i=0;i<s.length;i++){x^=s.charCodeAt(i);x=Math.imul(x,16777619)>>>0}return x}
+  r(s){return (this.hash(s)%100000)/100000}
+  slug(n){return n.toLowerCase().replace(/\s+/g,'-')}
+
+  pool(){
+    if(this._pool) return this._pool;
+    this._pool = this.RAW.map(([name,team,pos,price,base,code])=>{
+      const id=this.slug(name), parts=name.split(' '), last=parts[parts.length-1];
+      const xp={}, fx=[];
+      const trend=(this.r(id+':trend')-0.5)*1.7;
+      const kick=(this.r(id+':kick')-0.5)*0.62;
+      for(let h=0;h<8;h++) fx.push(Math.max(0.26,(0.54+0.9*this.r(team+':fx:'+h))*(1+trend*(h-3.5)/3.5)*(1+kick*(h<3?1:-0.45))));
+      this.MODELS.forEach(m=>{
+        xp[m.k]=[];
+        for(let h=0;h<8;h++){
+          const d=(this.r(id+m.k+h)-0.5)*m.sp*2;
+          xp[m.k].push(Math.max(0.4, base*fx[h]*(1+d)));
+        }
+      });
+      const cons=[];
+      for(let h=0;h<8;h++){
+        const v=this.MODELS.map(m=>xp[m.k][h]);
+        cons.push(v.reduce((a,b)=>a+b,0)/v.length);
+      }
+      const sd=[];
+      for(let h=0;h<8;h++){
+        const v=this.MODELS.map(m=>xp[m.k][h]), mu=cons[h];
+        sd.push(Math.sqrt(v.reduce((a,b)=>a+(b-mu)*(b-mu),0)/v.length));
+      }
+      const pStart=0.55+0.44*this.r(id+':start');
+      return {id,code,name,last,team,pos,price,base,xp,cons,sd,fx,pStart,
+        mins: 62+Math.round(28*this.r(id+':mins'))};
+    });
+    return this._pool;
+  }
+
+  byId(id){return this.pool().find(p=>p.id===id)}
+  squad(){return this.SQUAD.map(id=>this.byId(id)).filter(Boolean)}
+  key(){return this.state.active}
+  h(){return this.state.horizon-1}
+  val(p,mk,h){const a=mk==='cons'?p.cons:p.xp[mk];let s=0;for(let i=0;i<=h;i++)s+=a[i];return s/(h+1)}
+
+  pickXI(players,mk,h){
+    const gks=players.filter(p=>p.pos==='GK').sort((a,b)=>this.val(b,mk,h)-this.val(a,mk,h));
+    const d=players.filter(p=>p.pos==='DEF').sort((a,b)=>this.val(b,mk,h)-this.val(a,mk,h));
+    const m=players.filter(p=>p.pos==='MID').sort((a,b)=>this.val(b,mk,h)-this.val(a,mk,h));
+    const f=players.filter(p=>p.pos==='FWD').sort((a,b)=>this.val(b,mk,h)-this.val(a,mk,h));
+    let best=null;
+    this.FORMS.forEach(([nd,nm,nf])=>{
+      if(d.length<nd||m.length<nm||f.length<nf||!gks.length) return;
+      const sel=[gks[0],...d.slice(0,nd),...m.slice(0,nm),...f.slice(0,nf)];
+      const tot=sel.reduce((a,p)=>a+this.val(p,mk,h),0);
+      if(!best||tot>best.tot) best={tot,sel,f:[nd,nm,nf],d:d.slice(0,nd),m:m.slice(0,nm),fw:f.slice(0,nf),gk:gks[0]};
+    });
+    return best;
+  }
+
+  coords(best){
+    const rows=[[best.gk],best.d,best.m,best.fw], ys=[87,66,43,17], out=[];
+    rows.forEach((row,ri)=>{
+      row.forEach((p,i)=>{
+        const n=row.length, x= n===1?50: 13+74*((i+0.5)/n);
+        out.push({p,x:x+'%',y:ys[ri]+'%'});
+      });
+    });
+    return out;
+  }
+
+  fmt(v,d){return v.toFixed(d===undefined?1:d)}
+
+  ticksFor(p,h){
+    const vals=this.MODELS.map(m=>this.val(p,m.k,h));
+    const lo=Math.min(...vals), hi=Math.max(...vals), rng=Math.max(hi-lo,0.35);
+    return this.MODELS.map((m,i)=>({x:(6+88*(vals[i]-lo)/rng)+'%', c:m.k==='ens'?'#f2f4f7':'rgba(255,255,255,.32)'}));
+  }
+
+  select(id){return ()=>this.setState({selId:id})}
+
+  componentDidMount(){
+    this._kd=(e)=>{
+      if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();this.setState(s=>({palette:!s.palette}))}
+      if(e.key==='Escape') this.setState({palette:false,selId:null});
+    };
+    window.addEventListener('keydown',this._kd);
+  }
+  componentWillUnmount(){window.removeEventListener('keydown',this._kd)}
+
+  renderVals(){
+    const S=this.state, h=this.h(), mk=this.key(), motion=S.research?'0ms':'520ms cubic-bezier(.22,1,.36,1)';
+    const squad=this.squad();
+    const best=this.pickXI(squad,mk,h);
+    const base=this.pickXI(squad,mk,0);
+    const xiIds=new Set(best.sel.map(p=>p.id)), baseIds=new Set(base.sel.map(p=>p.id));
+    const churnN=best.sel.filter(p=>!baseIds.has(p.id)).length;
+    const coords=this.coords(best);
+
+    const views=[['pitch','Consensus pitch','1'],['diff','Squad diff','2'],['horizon','Horizon sensitivity','3'],
+      ['lab','Model Lab','4'],['planner','Transfer planner','5'],['log','Decision log','6'],['health','Data health','7'],['brief','Brief','8']];
+    const titles={pitch:'Consensus pitch',diff:'Squad diff · A vs B',horizon:'Horizon sensitivity',lab:'Model Lab',planner:'Transfer planner',log:'Decision log',health:'Data health',brief:'Brief'};
+    const subs={
+      pitch:'15-man squad fixed · XI and captaincy solved at h='+S.horizon+' · ranked by '+this.MODELS.find(m=>m.k===mk).n,
+      diff:'shared 15-man pool, two xP sources, same budget path',
+      horizon:'all 8 horizons precomputed in the run payload — dragging never fetches',
+      lab:'prediction quality and decision quality, kept separate',
+      planner:'multi-period MILP · rolling 8-GW horizon, execute GW1 of the plan',
+      log:'what the system recommended, and why, before the result was known',
+      health:'point-in-time or it is worthless',
+      brief:'assumptions, system, and what I would build next'};
+
+    const mainXP = best.sel.reduce((a,p)=>a+this.val(p,mk,h),0);
+    const benchP = squad.filter(p=>!xiIds.has(p.id));
+    const cost = squad.reduce((a,p)=>a+p.price,0);
+
+    // captaincy
+    const cap = best.sel.slice().sort((a,b)=>this.val(b,mk,h)-this.val(a,mk,h)).slice(0,4).map(p=>{
+      const ev=this.val(p,mk,h)*2, mx=this.val(best.sel[0],mk,h)*2.4;
+      return {last:p.last, ev:this.fmt(ev), w:Math.min(100,ev/mx*100)+'%',
+        haul:(0.10+0.30*this.r(p.id+':haul')).toFixed(2), blank:(0.14+0.26*this.r(p.id+':blank')).toFixed(2)};
+    });
+
+    const whyBank=['Chronos likes the team trajectory; LGBM sees minutes risk after the 68′ hook.',
+      'LLM arm reads a rotation hint from the presser the tabular models cannot see.',
+      'Baselines still price last season\'s role; the Bayes arm has shrunk him hard.',
+      'Fixture swing lands outside the h=1 window — long-horizon arms diverge.',
+      'BPS refit on 2026/27 only; bonus share is now materially different.'];
+    const topDis = squad.slice().sort((a,b)=>b.sd[h]-a.sd[h]).slice(0,4).map((p,i)=>({
+      last:p.last, sd:this.fmt(p.sd[h],2), why:whyBank[i%whyBank.length], open:this.select(p.id)}));
+
+    // ---- diff
+    const bestA=this.pickXI(squad,S.mA,h), bestB=this.pickXI(squad,S.mB,h);
+    const aIds=new Set(bestA.sel.map(p=>p.id)), bIds=new Set(bestB.sel.map(p=>p.id));
+    const agree=[...aIds].filter(i=>bIds.has(i)).length;
+    const onlyA=bestA.sel.filter(p=>!bIds.has(p.id)), onlyB=bestB.sel.filter(p=>!aIds.has(p.id));
+    const diffSlot=(c,side)=>{
+      const inBoth = side==='A' ? bIds.has(c.p.id) : aIds.has(c.p.id);
+      const col = inBoth?'#3b414c':(side==='A'?'oklch(.72 .13 250)':'oklch(.76 .14 90)');
+      return {x:c.x,y:c.y,last:c.p.last,team:c.p.team,price:this.fmt(c.p.price),
+        xp:this.fmt(this.val(c.p, side==='A'?S.mA:S.mB, h)),
+        bg: inBoth?'#12151a': (side==='A'?'oklch(.24 .06 250)':'oklch(.26 .07 90)'),
+        bd: inBoth?'rgba(0,0,0,.12)':col, fg: inBoth?'#c8ccd4':'#f2f4f7', open:this.select(c.p.id)};
+    };
+    const reasons=['3-per-club cap on Arsenal binds — B swaps the cheaper defender in.',
+      'Bench weighting: A tolerates the blank, B buys the safer floor.',
+      'Formation flips to 3-5-2, freeing £0.6m that B spends up front.',
+      'p(start) below 0.7 in the LLM arm — B refuses the minutes risk.',
+      'Long-horizon fixture swing; A only sees GW23.'];
+    const divergences = onlyA.slice(0,5).map((p,i)=>{
+      const q=onlyB[i]||onlyB[0]||p, dv=this.val(q,S.mB,h)-this.val(p,S.mA,h);
+      return {aName:p.last, aMeta:p.team+' · £'+this.fmt(p.price)+' · '+p.pos,
+        bName:q.last, bMeta:q.team+' · £'+this.fmt(q.price)+' · '+q.pos,
+        delta:(dv>=0?'+':'')+this.fmt(dv,2)+' xP', deltaC: dv>=0?'oklch(.78 .14 145)':'oklch(.74 .15 25)',
+        reason:reasons[i%reasons.length]};
+    });
+
+    // ---- heat surface
+    const allV=[];squad.forEach(p=>{for(let i=0;i<8;i++)allV.push(p.cons[i])});
+    const lo=Math.min(...allV), hi=Math.max(...allV);
+    const heatRows = squad.slice().sort((a,b)=>b.cons[h]-a.cons[h]).map(p=>({
+      last:p.last, nameC: xiIds.has(p.id)?'#e6e8ec':'#6d737f',
+      cells: p.cons.map((v,i)=>{
+        const t=(v-lo)/(hi-lo), inXI = xiIds.has(p.id) && i<=h;
+        return {v:this.fmt(v), t:p.last+' GW'+(23+i)+' · '+this.fmt(v)+' xP',
+          bg:'oklch('+(0.16+0.30*t).toFixed(3)+' '+(0.02+0.09*t).toFixed(3)+' 196)',
+          bd: inXI?'rgba(255,255,255,.3)':'transparent', fg: t>0.55?'#08090b':'#9aa0aa'};
+      })
+    }));
+    const gwHeads=[];for(let i=0;i<8;i++)gwHeads.push({t:'GW'+(23+i), c: i<=h?'oklch(.85 .11 196)':'#6d737f'});
+
+    // horizon curve
+    const cum=[];for(let i=0;i<8;i++){const b=this.pickXI(squad,mk,i);cum.push(b.sel.reduce((a,p)=>a+this.val(p,mk,i),0))}
+    const cmin=Math.min(...cum)-2, cmax=Math.max(...cum)+2;
+    const hx=i=>16+i*(288/7), hy=v=>110-((v-cmin)/(cmax-cmin))*98;
+    const hLine='M'+cum.map((v,i)=>hx(i).toFixed(1)+' '+hy(v).toFixed(1)).join(' L');
+    const hArea=hLine+' L'+hx(7).toFixed(1)+' 112 L16 112 Z';
+    const horizTicks=cum.map((v,i)=>({x:hx(i).toFixed(1),t:'h'+(i+1)}));
+    const churnRows=[...best.sel.filter(p=>!baseIds.has(p.id)).map(p=>({tag:'IN',tagC:'oklch(.78 .14 145)',last:p.last,v:'+'+this.fmt(this.val(p,mk,h)-this.val(p,mk,0),2)})),
+      ...base.sel.filter(p=>!xiIds.has(p.id)).map(p=>({tag:'OUT',tagC:'oklch(.74 .15 25)',last:p.last,v:this.fmt(this.val(p,mk,h)-this.val(p,mk,0),2)}))].slice(0,6);
+
+    // ---- lab
+    const perf={ppg:[0.31,2.41,0.212,1712,-8.1,'0.41'],epnext:[0.38,2.28,0.198,1783,-4.4,'0.36'],
+      lgbm:[0.54,1.96,0.161,1902,-2.8,'0.52'],bayes:[0.49,1.99,0.166,1871,-3.1,'0.39'],
+      chronos:[0.29,2.58,0.241,1664,-9.6,'0.61'],llm:[0.34,2.34,0.129,1798,-3.6,'0.33'],
+      ens:[0.58,1.88,0.147,1961,-1.9,'0.28']};
+    const boardCols=[{t:'MODEL',a:'left'},{t:'ρ h=1',a:'right'},{t:'ρ h=4+',a:'right'},{t:'CRPS',a:'right'},{t:'BRIER(start)',a:'right'},{t:'SEASON PTS',a:'right'},{t:'PTS/HIT',a:'right'},{t:'TURNOVER',a:'right'}];
+    const boardRows=this.MODELS.slice().sort((a,b)=>perf[b.k][3]-perf[a.k][3]).map(m=>{
+      const d=perf[m.k], good=d[3]>=1783;
+      return {n:m.n,t:m.t,color:m.c, bg: m.k===mk?'rgba(255,255,255,.028)':'transparent',
+        cells:[{v:d[0].toFixed(2),c:d[0]>=0.38?'oklch(.82 .13 145)':'oklch(.74 .13 25)'},
+          {v:(d[0]-0.06+0.12*this.r(m.k+'h4')).toFixed(2),c:'#c8ccd4'},
+          {v:d[1].toFixed(2),c:'#c8ccd4'},{v:d[2].toFixed(3),c:'#c8ccd4'},
+          {v:String(d[3]),c:good?'oklch(.82 .13 145)':'oklch(.74 .13 25)'},
+          {v:d[4].toFixed(1),c:'#c8ccd4'},{v:d[5],c:'#c8ccd4'}]};
+    });
+    const calSet=[{k:'ens',n:'Stack'},{k:'lgbm',n:'LightGBM'},{k:'epnext',n:'ep_next'}];
+    const cx=i=>34+i*(254/9), cyv=v=>196-v*182;
+    const calLines=calSet.map(s=>{
+      const bias=s.k==='ens'?0.02:(s.k==='lgbm'?0.05:0.13);
+      const pts=[];for(let i=0;i<10;i++){const p=i/9;pts.push([cx(i),cyv(Math.max(0,Math.min(1,p-bias*(p-0.42)*2.4+(this.r(s.k+i)-0.5)*0.045)))])}
+      return {c:this.MODELS.find(m=>m.k===s.k).c, d:'M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L'), pts};
+    });
+    const calDots=[];calLines.forEach(l=>l.pts.forEach(p=>calDots.push({x:p[0].toFixed(1),y:p[1].toFixed(1),c:l.c})));
+    const calLegend=calSet.map((s,i)=>({n:s.n,c:calLines[i].c,ece:(0.012+0.05*this.r(s.k+':ece')).toFixed(3)}));
+
+    const radarM=['ρ h=1','CRPS','calib.','stability','pts'];
+    const ringPts=(f)=>radarM.map((_,i)=>{const a=-Math.PI/2+i*2*Math.PI/5;return (150+Math.cos(a)*84*f).toFixed(1)+','+(112+Math.sin(a)*84*f).toFixed(1)}).join(' ');
+    const radarRings=[0.25,0.5,0.75,1].map(f=>({p:ringPts(f)}));
+    const radarAxes=radarM.map((t,i)=>{const a=-Math.PI/2+i*2*Math.PI/5;
+      return {x:(150+Math.cos(a)*84).toFixed(1),y:(112+Math.sin(a)*84).toFixed(1),
+        lx:(150+Math.cos(a)*100).toFixed(1),ly:(112+Math.sin(a)*100+3).toFixed(1),t,
+        anchor: Math.abs(Math.cos(a))<0.2?'middle':(Math.cos(a)>0?'start':'end')};
+    });
+    const radarShapes=calSet.map(s=>{const m=this.MODELS.find(x=>x.k===s.k);
+      const p=radarM.map((_,i)=>{const a=-Math.PI/2+i*2*Math.PI/5,f=0.42+0.55*this.r(s.k+':rad'+i);
+        return (150+Math.cos(a)*84*f).toFixed(1)+','+(112+Math.sin(a)*84*f).toFixed(1)}).join(' ');
+      return {p,c:m.c,fill:'rgba(0,0,0,.05)'}});
+    const radarLegend=calSet.map(s=>({n:s.n,c:this.MODELS.find(m=>m.k===s.k).c}));
+
+    const residBars=[];for(let i=0;i<17;i++){const d=i-8,g=Math.exp(-d*d/7)*(d>0?1+d*0.22:1);
+      const hh=g*150/1.9;residBars.push({x:(16+i*16).toFixed(1),y:(172-hh).toFixed(1),w:'13',h:hh.toFixed(1),
+        c: d===0?'oklch(.84 .12 196)':'rgba(0,0,0,.25)'})}
+
+    const rlModels=[{k:'ens',w:'2.2'},{k:'lgbm',w:'1.4'},{k:'epnext',w:'1.4'},{k:'chronos',w:'1.4'}];
+    const rx=g=>46+(g-1)*(838/37), ry=v=>270-v/2100*258;
+    const cumPts={};rlModels.forEach(m=>{let t=0;const arr=[];for(let g=1;g<=38;g++){t+=perf[m.k][3]/38*(0.7+0.6*this.r(m.k+':g'+g));arr.push(t)}cumPts[m.k]=arr});
+    const replayLines=rlModels.map(m=>({c:this.MODELS.find(x=>x.k===m.k).c,w:m.w,
+      d:'M'+cumPts[m.k].map((v,i)=>rx(i+1).toFixed(1)+' '+ry(v).toFixed(1)).join(' L')}));
+    const replayDots=rlModels.map((m,i)=>({y:ry(cumPts[m.k][S.replayGw-1]).toFixed(1),c:this.MODELS.find(x=>x.k===m.k).c,
+      tx:(rx(S.replayGw)+8).toFixed(1),ty:(ry(cumPts[m.k][S.replayGw-1])+3-i*0).toFixed(1),t:Math.round(cumPts[m.k][S.replayGw-1])+''}));
+    const replayGrid=[0,500,1000,1500,2000].map(v=>({y:ry(v).toFixed(1),ty:(ry(v)+3).toFixed(1),t:String(v)}));
+    const replayCards=rlModels.map(m=>{const M=this.MODELS.find(x=>x.k===m.k);
+      return {n:M.n,color:M.c,pts:Math.round(cumPts[m.k][S.replayGw-1]),
+        hits:Math.round(2+8*this.r(m.k+':hits')),to:perf[m.k][5]}});
+
+    const wCols=['GK','DEF','MID','FWD'];
+    const weightRows=this.MODELS.map(m=>({n:m.n,cells:wCols.map((c,i)=>{
+      const w=this.r(m.k+':w'+i+String(S.horizon));const v=m.k==='ens'?0:w;
+      return {v:v.toFixed(2),bg:'oklch('+(0.15+0.26*v).toFixed(3)+' '+(0.015+0.085*v).toFixed(3)+' 196)',fg:v>0.6?'#08090b':'#9aa0aa'}})}))
+      .filter(r=>r.n!=='Stack (per-h)');
+
+    // ---- planner
+    const planHeads=[];for(let i=0;i<8;i++){const g=23+i;
+      planHeads.push({gw:'GW'+g,note: g===27?'blank · −4 hit':(g===29?'DGW':(i===0?'execute now':'plan only')),
+        bg: i===0?'oklch(.2 .04 196)':'#0e1014', fg: i===0?'oklch(.88 .1 196)':'#dfe2e8'})}
+    const cellDef=(t,sub,kind)=>({has:true,t,sub,
+      bg: kind==='in'?'oklch(.22 .05 145)':(kind==='out'?'oklch(.22 .05 25)':'#12151a'),
+      bd: kind==='in'?'oklch(.45 .1 145)':(kind==='out'?'oklch(.45 .1 25)':'rgba(0,0,0,.10)'),
+      fg:'#f2f4f7'});
+    const empty={has:false};
+    const planRows=[
+      {label:'TRANSFER IN',cells:[cellDef('Semenyo','£8.1m','in'),empty,cellDef('Saka','£10.3m','in'),empty,cellDef('Gvardiol','£6.2m','in'),cellDef('Isak','£10.5m','in'),empty,cellDef('Kudus','£6.5m','in')]},
+      {label:'TRANSFER OUT',cells:[cellDef('Elanga','£5.9m','out'),empty,cellDef('Miley','£4.5m','out'),empty,cellDef('Disasi','£4.2m','out'),cellDef('Thiago','£6.3m','out'),empty,cellDef('Kerkez','£5.5m','out')]},
+      {label:'CHIP',cells:[empty,empty,empty,empty,empty,empty,cellDef('Bench Boost','set B','chip'),empty]},
+      {label:'FT BANK',cells:[cellDef('1','rolled','n'),cellDef('2','rolled','n'),cellDef('1','rolled','n'),cellDef('2','rolled','n'),cellDef('1','rolled','n'),cellDef('0','−4 hit','out'),cellDef('1','rolled','n'),cellDef('1','rolled','n')]}
+    ];
+    const planValue=[{k:'Base squad xP (8 GW)',v:'+412.6',c:'oklch(.8 .12 196)',l:'0%',w:'86%'},
+      {k:'Transfers gained',v:'+21.4',c:'oklch(.8 .13 145)',l:'0%',w:'34%'},
+      {k:'Hits paid',v:'−4.0',c:'oklch(.74 .14 25)',l:'0%',w:'12%'},
+      {k:'Bench Boost (GW29 DGW)',v:'+16.8',c:'oklch(.78 .13 75)',l:'0%',w:'27%'},
+      {k:'Net vs no-transfer hold',v:'+34.2',c:'#dfe2e8',l:'0%',w:'52%'}];
+    const binding=[{k:'club_cap[ARS] = 3',v:'Blocks Saliba entering at GW25; forces the cheaper Gvardiol route.',c:'oklch(.74 .14 25)'},
+      {k:'chip_expiry[set A] ≤ GW19',v:'Already past — set A forfeited, only set B schedulable.',c:'oklch(.78 .13 75)'},
+      {k:'budget ≤ 100.0 + sold',v:'Binding in 6 of 8 weeks; price rises relax it by £0.3m.',c:'oklch(.74 .14 25)'},
+      {k:'ft_bank ≤ 5',v:'Non-binding under this plan — never accumulates past 2.',c:'#6b7280'},
+      {k:'bench_weight = 0.18',v:'Tuned on 2024–26 realised bench returns, not assumed.',c:'#6b7280'}];
+
+    // ---- log
+    const logEntries=[
+      {gw:'GW22',run:'run_9f2c1a',pred:'62.4',act:'71',c:'oklch(.8 .13 145)',tag:'BEAT',
+        decision:'Haaland (C), no transfer, 1 FT rolled.',
+        why:'Stack put 0.31 on P(haul≥10) vs 0.19 for the field; hold dominated all single-transfer moves by >1.4 xP.',
+        post:'Correct for the right reason — captaincy EV, not the transfer.'},
+      {gw:'GW21',run:'run_8b71de',pred:'58.9',act:'44',c:'oklch(.74 .14 25)',tag:'MISS',
+        decision:'Kerkez → Muñoz, Salah (C).',
+        why:'LLM arm read a rotation risk on Kerkez at 0.42 p(start); tabular arms disagreed.',
+        post:'LLM was right on minutes, wrong on the replacement. Brier improved, points fell.'},
+      {gw:'GW20',run:'run_77aa03',pred:'55.1',act:'57',c:'oklch(.8 .13 145)',tag:'HELD',
+        decision:'No transfer. Bench order changed only.',
+        why:'All arms within 0.6 xP of hold; optimizer refused to pay churn cost.',
+        post:'The multi-period formulation earning its keep — a single-period solve would have transferred.'},
+      {gw:'GW19',run:'run_6c40f8',pred:'71.8',act:'89',c:'oklch(.8 .13 145)',tag:'CHIP',
+        decision:'Triple Captain on Haaland — set A, expiry deadline.',
+        why:'Forced by chip_expiry constraint; solver chose the highest-variance week available.',
+        post:'Expiry constraint made this decision, not the model. Worth noting in the write-up.'},
+      {gw:'GW18',run:'run_5a1197',pred:'49.2',act:'38',c:'oklch(.74 .14 25)',tag:'MISS',
+        decision:'−4 hit: Wood → Ekitiké.',
+        why:'Chronos flagged a Liverpool attacking-strength upswing; stack weighted it 0.22 at h=4.',
+        post:'TSFM arm cost points. Weight at h=4 cut from 0.22 to 0.09 in the next refit.'},
+      {gw:'GW17',run:'run_4d8022',pred:'53.6',act:'54',c:'#8b919c',tag:'FLAT',
+        decision:'Rice → Semenyo, no chip.',
+        why:'Rank order inside the £8m band flipped after the BPS refit on 2026/27 data.',
+        post:'Nothing to learn. Logged for completeness.'}
+    ];
+
+    const healthStats=[{k:'SNAPSHOT LAG',v:'0h 14m',c:'oklch(.82 .13 145)',sub:'last bootstrap-static capture'},
+      {k:'AS_OF GUARD',v:'ENFORCED',c:'oklch(.82 .13 145)',sub:'query layer, not convention'},
+      {k:'SIM PARITY',v:'99.97%',c:'oklch(.82 .13 145)',sub:'GW22 points reproduced from raw stats'},
+      {k:'ID RECONCILIATION',v:'11 / 11',c:'oklch(.78 .13 75)',sub:'reclassified players joined on code'}];
+    const snapshots=[{src:'fpl/bootstrap-static',at:'2026-07-29 09:02',rows:'714',st:'OK',c:'oklch(.8 .13 145)'},
+      {src:'fpl/fixtures',at:'2026-07-29 09:02',rows:'380',st:'OK',c:'oklch(.8 .13 145)'},
+      {src:'fpl/element-summary',at:'2026-07-29 09:11',rows:'714',st:'OK',c:'oklch(.8 .13 145)'},
+      {src:'fbref/shooting+passing',at:'2026-07-29 06:40',rows:'2 941',st:'OK',c:'oklch(.8 .13 145)'},
+      {src:'odds/anytime-scorer',at:'2026-07-29 08:55',rows:'318',st:'OK',c:'oklch(.8 .13 145)'},
+      {src:'presser/transcripts',at:'2026-07-29 07:20',rows:'6',st:'PARTIAL',c:'oklch(.8 .12 75)'}];
+    const gates=[{k:'No feature row reads captured_at > as_of',v:'12 340 rows scanned · 0 violations',icon:'✓',bg:'oklch(.24 .06 145)',bd:'oklch(.45 .1 145)',fg:'oklch(.9 .12 145)'},
+      {k:'Scoring simulator reproduces GW22 exactly',v:'714 players · 2 mismatches, both provisional-bonus edge cases',icon:'✓',bg:'oklch(.24 .06 145)',bd:'oklch(.45 .1 145)',fg:'oklch(.9 .12 145)'},
+      {k:'Prices joined at deadline snapshot, not latest',v:'asserted in query layer',icon:'✓',bg:'oklch(.24 .06 145)',bd:'oklch(.45 .1 145)',fg:'oklch(.9 .12 145)'},
+      {k:'Ingestion cron ≥ 09:00 UK day after last fixture',v:'moved 2026-07-14 · was snapshotting provisional bonus',icon:'✓',bg:'oklch(.24 .06 145)',bd:'oklch(.45 .1 145)',fg:'oklch(.9 .12 145)'},
+      {k:'BPS coefficients fit on 2026/27 only',v:'22 GW of data · CI still wide for goalkeepers',icon:'!',bg:'oklch(.24 .05 75)',bd:'oklch(.45 .09 75)',fg:'oklch(.9 .11 75)'},
+      {k:'Odds feed completeness ≥ 98%',v:'318/324 selections · 2 fixtures unpriced',icon:'!',bg:'oklch(.24 .05 75)',bd:'oklch(.45 .09 75)',fg:'oklch(.9 .11 75)'},
+      {k:'Purged CV: no gameweek straddles a fold',v:'expanding window, boundary purge asserted',icon:'✓',bg:'oklch(.24 .06 145)',bd:'oklch(.45 .1 145)',fg:'oklch(.9 .12 145)'}];
+    const ruleDeltas=[{k:'8 chips, two sets',v:'set A expired at the GW19 deadline; hard constraint in the MILP, not a preference.'},
+      {k:'BPS rework',v:'less overlap with DefCon, GK/full-back/creative uplift, dribbled-past penalty removed — bonus model refit on 2026/27 only.'},
+      {k:'Scores finalise 09:00 UK',v:'day after the last fixture; ingestion cron moved or you snapshot provisional bonus.'},
+      {k:'11 positional reclassifications',v:'players reconciled on code across seasons, never on id.'},
+      {k:'5 rolled free transfers · DefCon',v:'unchanged from 2025/26.'}];
+
+    const brief=[
+      {k:'WHAT THIS IS',v:'A clickable mock of the research console — eight screens, real interactions, synthetic numbers. Player names, clubs and price bands are plausible for 2026/27; every metric on screen is generated, so read the shapes and the information architecture, not the values.'},
+      {k:'THE PREMISE I DESIGNED TO',v:'This is a ranking tool, not a prediction tool. Nothing in the UI leads with MAE. Every screen is built around comparison — model vs model, horizon vs horizon, recommendation vs realised — because that is the only thing a researcher does here.'},
+      {k:'DISAGREEMENT ENCODING',v:'Saturated colour is reserved for exactly one thing: models disagreeing. The divergence bar at the foot of every card plots all seven arms as ticks on a shared local xP axis, with the stack in white. Magenta aura appears only above σ 0.55, so it means something when it shows up.'},
+      {k:'POSITIONAL COLOUR',v:'Okabe-Ito-derived hues (amber / blue / green / vermillion) for GK-DEF-MID-FWD, applied as 3px edge stripes only. Colourblind-safe and never load-bearing — position is always also written on the card.'},
+      {k:'MOTION BUDGET',v:'Layout transitions only, on transform and position, ≤520ms, and only where they answer "what changed and where did it go" — pitch cards re-forming under the horizon slider, players travelling between the two diff pitches. The research pitch view and the Model Lab tables have no motion at all. Research mode zeroes everything in one switch.'},
+      {k:'THE TWO SCREENS THAT MATTER',v:'Squad diff and the horizon slider. Both are built so the answer is legible without reading a number: which players survive a model swap, and which survive a horizon change.'},
+      {k:'WHAT I DID NOT BUILD',v:'Live data, real solver output, virtualised 700-row tables, the LLM query surface, and mobile layouts. The table view here shows the 32-player shortlist, not the full pool — at full scale it needs virtualisation and the rows must not be animated.'},
+      {k:'NEXT DECISIONS FOR YOU',v:'(1) Is the aesthetic pitch worth its screen real estate, or does the research grid replace it? (2) Should the drill-down be a drawer or a full route you can link to from the decision log? (3) Do you want the Model Lab locked to Research mode permanently?'}
+    ];
+
+    const p=this.byId(S.selId);
+    let sel=null;
+    if(p){
+      const fx0=30, fw=456, fy=v=>158-(v/12)*140;
+      const q=(i,f)=>Math.max(0.2,p.cons[i]*f);
+      const px=i=>fx0+i*(fw/7);
+      const mk10=[],mk90=[],mk25=[],mk75=[];
+      for(let i=0;i<8;i++){mk10.push([px(i),fy(q(i,0.34))]);mk90.push([px(i),fy(q(i,2.15))]);mk25.push([px(i),fy(q(i,0.62))]);mk75.push([px(i),fy(q(i,1.55))])}
+      const band=(a,b)=>'M'+a.map(v=>v[0].toFixed(1)+' '+v[1].toFixed(1)).join(' L')+' L'+b.slice().reverse().map(v=>v[0].toFixed(1)+' '+v[1].toFixed(1)).join(' L')+' Z';
+      const per90Defs = p.pos==='GK'?[['saves / 90',3.1,4.6],['xGC / 90',1.24,2.2],['CS prob',0.31,0.6],['DefCon / 90',0.4,3],['BPS / 90',18,34],['bonus / 90',0.42,1.2]]
+        : p.pos==='DEF'?[['xG / 90',0.09,0.4],['xA / 90',0.14,0.4],['CS prob',0.33,0.6],['DefCon / 90',6.1,12],['BPS / 90',21,34],['bonus / 90',0.51,1.2]]
+        : [['xG / 90',0.42,0.9],['xA / 90',0.28,0.6],['shots / 90',3.4,6],['big chances',0.61,1.5],['BPS / 90',27,40],['bonus / 90',0.74,1.5]];
+      const shapLabels=['fixture ease (odds)','minutes prior','xG per 90','xA per 90','set-piece share','team att. strength','rotation risk','BPS trend'];
+      sel={
+        name:p.name, posColor:this.POS[p.pos],
+        meta:this.TEAMS[p.team]+' · '+p.pos+' · £'+this.fmt(p.price)+'m · owned '+(4+42*this.r(p.id+':own')).toFixed(1)+'%',
+        xp:this.fmt(this.val(p,mk,h)), hLabel:'per GW, h='+S.horizon,
+        decomp:[{k:'p(appear)',v:p.pStart.toFixed(2),sub:'logistic + LLM prior'},
+          {k:'E[min | app]',v:String(p.mins),sub:'truncated normal'},
+          {k:'attacking',v:this.fmt(this.val(p,mk,h)*0.52,2),sub:'goals + assists'},
+          {k:'defensive',v:this.fmt(this.val(p,mk,h)*0.29,2),sub:'CS + DefCon'},
+          {k:'bonus/BPS',v:this.fmt(this.val(p,mk,h)*0.19,2),sub:'refit 2026/27'}],
+        fan90:band(mk90,mk10), fan50:band(mk75,mk25),
+        median:'M'+p.cons.map((v,i)=>px(i).toFixed(1)+' '+fy(v).toFixed(1)).join(' L'),
+        fanTicks:p.cons.map((v,i)=>{const f=Math.round(2+3*this.r(p.team+':fdr'+i));
+          return {x:px(i).toFixed(1),t:'GW'+(23+i),fdr:'FDR '+f,fdrC: f<=2?'oklch(.78 .13 145)':(f>=4?'oklch(.74 .14 25)':'#7d838f')}}),
+        minsBins:[0,1,15,30,45,60,70,80,88,90].map((b,i)=>{
+          const w=i>=7?0.9:0.18+0.5*this.r(p.id+':mb'+i);
+          return {t:b===0?'0':String(b),h:(12+78*(i>=7?w:w*0.5))+'%',c: i>=7?'oklch(.78 .12 196)':'rgba(255,255,255,.18)'}}),
+        minsStats:[{k:'p(start)',v:p.pStart.toFixed(2),c:p.pStart>0.8?'oklch(.82 .13 145)':'oklch(.8 .12 75)'},
+          {k:'E[minutes]',v:String(Math.round(p.mins*p.pStart)),c:'#e6e8ec'},
+          {k:'p(60+)',v:(p.pStart*0.88).toFixed(2),c:'#e6e8ec'},
+          {k:'brier (LLM arm)',v:(0.08+0.09*this.r(p.id+':br')).toFixed(3),c:'oklch(.82 .12 196)'}],
+        llmNote:'Presser 26 Jul: manager referenced a "settled front three". Structured output {start_probability: '+p.pStart.toFixed(2)+', minutes_band: "60-90", injury_status: "fit"}, 2 evidence URLs. Beats chance_of_playing_next_round by 0.021 Brier this season.',
+        per90:per90Defs.map(([k,v,max])=>({k,v:v<1?v.toFixed(2):v.toFixed(1),w:Math.min(100,v/max*100)+'%',
+          c: p.pos==='GK'?this.POS.GK:(p.pos==='DEF'?this.POS.DEF:(p.pos==='MID'?this.POS.MID:this.POS.FWD)),
+          lo:Math.max(0,v/max*100-11)+'%',hi:Math.max(0,100-Math.min(100,v/max*100+11))+'%'})),
+        shap:shapLabels.map(k=>{const v=(this.r(p.id+k)-0.42)*2.4;
+          return {k,v:(v>=0?'+':'')+v.toFixed(2),l: v>=0?'50%':(50+v/3*50)+'%',w:Math.abs(v)/3*50+'%',
+            c: v>=0?'oklch(.78 .12 145)':'oklch(.72 .14 25)'}}),
+        models:this.MODELS.map(m=>{const vals=this.MODELS.map(x=>this.val(p,x.k,h));
+          const mn=Math.min(...vals),mx=Math.max(...vals),rg=Math.max(mx-mn,0.3);
+          return {n:m.n,c:m.c,v:this.fmt(this.val(p,m.k,h)),x:(2+94*(this.val(p,m.k,h)-mn)/rg)+'%'}}),
+        spreadNote:'σ = '+this.fmt(p.sd[h],2)+' xP across arms. '+(p.sd[h]>0.55?'Above the 0.55 threshold — this player carries an aura on the pitch and should not be captained without reading the minutes panel above.':'Below threshold; the arms substantially agree and the stack is close to the mean.')
+      };
+    }
+
+    const paletteAll=[
+      ...views.map(([k,label])=>({label:'Go to '+label,kind:'view',icon:'→',bg:'#1a1e25',fg:'#9aa0aa',go:()=>this.setState({view:k,palette:false})})),
+      ...this.MODELS.map(m=>({label:'Rank by '+m.n,kind:'model',icon:'M',bg:'#1a1e25',fg:'#9aa0aa',go:()=>this.setState({active:m.k,view:'pitch',palette:false})})),
+      ...this.pool().map(pl=>({label:pl.name,kind:pl.team+' · '+pl.pos,icon:pl.pos[0],bg:'#1a1e25',fg:this.POS[pl.pos],go:()=>this.setState({selId:pl.id,palette:false})}))
+    ];
+    const qq=S.q.trim().toLowerCase();
+    const paletteItems=(qq?paletteAll.filter(i=>i.label.toLowerCase().includes(qq)||i.kind.toLowerCase().includes(qq)):paletteAll).slice(0,40);
+
+    const chipFor=(k,cur,set)=>({k,go:()=>this.setState(set(k)),
+      bg: cur===k?'oklch(.28 .06 196)':'transparent', fg: cur===k?'oklch(.9 .11 196)':'#8b919c',
+      bd: cur===k?'oklch(.5 .1 196)':'rgba(0,0,0,.12)'});
+
+    return {
+      motion, horizon:S.horizon, horizonLabel:'GW23–'+(22+S.horizon), churn:churnN+' / 11',
+      title:titles[S.view], subtitle:subs[S.view], runId:'9f2c1a', snap:'a71e·0c4', countdown:'2d 14h 09m',
+      isPitch:S.view==='pitch', isDiff:S.view==='diff', isHorizon:S.view==='horizon', isLab:S.view==='lab',
+      isPlanner:S.view==='planner', isLog:S.view==='log', isHealth:S.view==='health', isBrief:S.view==='brief',
+      nav:views.map(([k,label,kbd])=>({label,kbd,go:()=>this.setState({view:k}),
+        bg:S.view===k?'rgba(0,0,0,.08)':'transparent', fg:S.view===k?'#f2f4f7':'#a8aeb8',
+        dot:S.view===k?'oklch(.84 .12 196)':'#3b414c'})),
+      registry:this.MODELS.map(m=>({n:m.n,color:m.c,op:S.active===m.k?'1':'.6',rho:perf[m.k][0].toFixed(2),
+        rhoC:perf[m.k][0]>=0.38?'oklch(.8 .12 145)':'#7d838f',go:()=>this.setState({active:m.k,view:'pitch'})})),
+      toggleResearch:()=>this.setState(s=>({research:!s.research})),
+      rmBorder:S.research?'oklch(.5 .1 196)':'rgba(0,0,0,.10)', rmBg:S.research?'oklch(.22 .05 196)':'transparent',
+      rmTrack:S.research?'oklch(.7 .12 196)':'rgba(0,0,0,.25)', rmKnob:S.research?'13px':'2px',
+      rmFg:S.research?'oklch(.92 .08 196)':'#a8aeb8',
+      openPalette:()=>this.setState({palette:true}), closePalette:()=>this.setState({palette:false,q:''}),
+      palette:S.palette, q:S.q, setQ:(e)=>this.setState({q:e.target.value}), paletteItems,
+      setHorizon:(e)=>this.setState({horizon:+e.target.value}),
+      setReplay:(e)=>this.setState({replayGw:+e.target.value}), replayGw:S.replayGw,
+      pitchModes:[['aesthetic','Pitch'],['research','Research grid'],['table','Shortlist table']].map(([k,label])=>({label,
+        go:()=>this.setState({pitchMode:k}), bg:S.pitchMode===k?'rgba(0,0,0,.15)':'transparent',
+        fg:S.pitchMode===k?'#f2f4f7':'#8b919c'})),
+      modeAesthetic:S.pitchMode==='aesthetic', modeResearch:S.pitchMode==='research', modeTable:S.pitchMode==='table',
+      activeChips:this.MODELS.map(m=>chipFor(m.k,S.active,k=>({active:k}))),
+      chipsA:this.MODELS.map(m=>chipFor(m.k,S.mA,k=>({mA:k}))),
+      chipsB:this.MODELS.map(m=>chipFor(m.k,S.mB,k=>({mB:k}))),
+      squadXP:this.fmt(mainXP), squadCost:this.fmt(cost), formation:best.f.join('-'),
+      xi:coords.map((c,i)=>({x:c.x,y:c.y,z:String(10+i),code:c.p.code,last:c.p.last,team:c.p.team,pos:c.p.pos,
+        price:this.fmt(c.p.price), xp:this.fmt(this.val(c.p,mk,h)), hLabel:'h'+S.horizon,
+        posColor:this.POS[c.p.pos], aura: c.p.sd[h]>0.55?String(Math.min(1,(c.p.sd[h]-0.55)*2.4)):'0',
+        ticks:this.ticksFor(c.p,h), consX:(6+88*0.5)+'%', open:this.select(c.p.id)})),
+      bench:benchP.map(p=>({last:p.last,team:p.team,price:this.fmt(p.price),xp:this.fmt(this.val(p,mk,h)),
+        posColor:this.POS[p.pos],open:this.select(p.id)})),
+      xiGrid:best.sel.map(p=>({last:p.last,team:p.team,xp:this.fmt(this.val(p,mk,h)),sd:this.fmt(p.sd[h],2),
+        posColor:this.POS[p.pos],pstart:p.pStart.toFixed(2),mins:String(Math.round(p.mins*p.pStart)),
+        open:this.select(p.id),
+        bars:this.MODELS.map(m=>{const v=this.val(p,m.k,h),vals=this.MODELS.map(x=>this.val(p,x.k,h));
+          const mx=Math.max(...vals);return {h:(22+78*v/mx)+'%',c:m.k===mk?'oklch(.84 .12 196)':'rgba(0,0,0,.30)',
+          t:m.n+' '+this.fmt(v)}})})),
+      captaincy:cap, topDisagree:topDis,
+      chips:[{n:'Wildcard (set B)',s:'AVAILABLE',color:'oklch(.8 .13 145)'},
+        {n:'Free Hit (set B)',s:'AVAILABLE',color:'oklch(.8 .13 145)'},
+        {n:'Triple Captain (set B)',s:'PLANNED GW31',color:'oklch(.8 .12 196)'},
+        {n:'Bench Boost (set B)',s:'PLANNED GW29',color:'oklch(.8 .12 196)'},
+        {n:'Set A (all four)',s:'FORFEIT',color:'oklch(.72 .14 25)'}],
+      tableCols:[{t:'PLAYER',a:'left'},{t:'TEAM',a:'left'},{t:'POS',a:'left'},{t:'£',a:'right'},
+        ...this.MODELS.map(m=>({t:m.k.toUpperCase(),a:'right'})),{t:'σ',a:'left'}],
+      tableRows:this.pool().slice().sort((a,b)=>this.val(b,mk,h)-this.val(a,mk,h)).map(p=>{
+        const vals=this.MODELS.map(m=>this.val(p,m.k,h)),mx=Math.max(...vals);
+        return {name:p.name,team:p.team,pos:p.pos,price:this.fmt(p.price),posColor:this.POS[p.pos],
+          inSquad:this.SQUAD.includes(p.id), bg: xiIds.has(p.id)?'rgba(255,255,255,.026)':'transparent',
+          open:this.select(p.id), sdW:Math.min(100,p.sd[h]/1.1*100)+'%',
+          cells:this.MODELS.map((m,i)=>({v:this.fmt(vals[i]),c: m.k===mk?'#f2f4f7':(vals[i]===mx?'#c8ccd4':'#8b919c')}))}}),
+      nAgree:agree, nA:onlyA.length, nB:onlyB.length,
+      diffPitches:[{side:'A',n:this.MODELS.find(m=>m.k===S.mA).n,xp:this.fmt(bestA.sel.reduce((a,p)=>a+this.val(p,S.mA,h),0)),
+          formation:bestA.f.join('-'),slots:this.coords(bestA).map(c=>diffSlot(c,'A'))},
+        {side:'B',n:this.MODELS.find(m=>m.k===S.mB).n,xp:this.fmt(bestB.sel.reduce((a,p)=>a+this.val(p,S.mB,h),0)),
+          formation:bestB.f.join('-'),slots:this.coords(bestB).map(c=>diffSlot(c,'B'))}],
+      divergences,
+      heatRows, gwHeads,
+      horizArea:hArea, horizLine:hLine, horizTicks, horizMarkX:hx(h).toFixed(1), horizMarkY:hy(cum[h]).toFixed(1),
+      churnRows,
+      labTabs:[['board','Leaderboard'],['replay','Counterfactual replay'],['whatif','Run config & weights']].map(([k,label])=>({label,
+        go:()=>this.setState({labTab:k}),bg:S.labTab===k?'rgba(0,0,0,.15)':'transparent',fg:S.labTab===k?'#f2f4f7':'#8b919c'})),
+      labIsBoard:S.labTab==='board', labIsReplay:S.labTab==='replay', labIsWhatIf:S.labTab==='whatif',
+      boardCols, boardRows, calLines, calDots, calLegend, radarRings, radarAxes, radarShapes, radarLegend, residBars,
+      replayLines, replayDots, replayGrid, replayCards, replayX:rx(S.replayGw).toFixed(1),
+      weightCols:wCols, weightRows,
+      runConfig:[{k:'run_id',v:'run_9f2c1a'},{k:'data snapshot hash',v:'a71e0c4b…'},{k:'model set',v:'7 arms · 2 baselines'},
+        {k:'ensemble',v:'stack · per-h × per-pos'},{k:'optimizer',v:'MILP · HiGHS · 8 GW rolling'},
+        {k:'bench weight',v:'0.18'},{k:'seed',v:'20260729'},{k:'CV',v:'expanding, purged at GW boundary'}],
+      planHeads, planRows, planValue, binding,
+      logEntries, healthStats, snapshots, gates, ruleDeltas, brief,
+      sel, closeSel:()=>this.setState({selId:null})
+    };
+  }
+}
+</script>
+</body>
+</html>
