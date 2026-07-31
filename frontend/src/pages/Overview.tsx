@@ -115,7 +115,10 @@ export default function OverviewPage() {
                           ring={`var(--color-pos-${player.position.toLowerCase()})`}
                         />
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-display text-[16px] font-semibold leading-snug">
+                          {/* The bento cells are narrow; wrapping to a second
+                              line shows the whole name where truncating turned
+                              "B.Fernandes" into "B.Fern…". */}
+                          <p className="font-display text-[15.5px] font-semibold leading-snug [overflow-wrap:anywhere]">
                             {player.web_name}
                           </p>
                           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-text-muted">
@@ -242,8 +245,16 @@ export default function OverviewPage() {
                         {player.team} · {money(player.price)} · {ownership(player.ownership, 0)} owned
                       </p>
                     </div>
-                    <span className="font-display text-[15px] font-semibold tabular-nums">
-                      {num(player.xp, 2)}
+                    {/* The board is ranked on the horizon total, so that is what
+                        is shown — printing the single-gameweek xP here made an
+                        ordered list look unsorted. */}
+                    <span className="shrink-0 text-right">
+                      <span className="font-display text-[15px] font-semibold num">
+                        {player.xp_horizon === null ? num(player.xp, 2) : num(player.xp_horizon, 1)}
+                      </span>
+                      <span className="ml-1 text-[11px] text-text-faint">
+                        {player.xp_horizon === null ? 'xP' : `over ${prefs.horizon}`}
+                      </span>
                     </span>
                   </Link>
                 ))}

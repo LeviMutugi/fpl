@@ -49,15 +49,20 @@ function SourceCard({ source }: { source: SourceRow }) {
   return (
     <GlowCard className="h-full">
       <div className="flex h-full flex-col gap-4 p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
+        <div className="space-y-2">
+          {/* The status badge shares the title's row only. Keeping the purpose
+              text out of it lets the copy use the card's full width instead of
+              wrapping every two words beside the badge. */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-2">
               <StatusIcon status={source.status} />
-              <h3 className="truncate font-display text-[15px] font-semibold">{source.label}</h3>
+              <h3 className="font-display text-[15px] font-semibold leading-snug">{source.label}</h3>
             </div>
-            <p className="mt-1.5 text-[13px] leading-relaxed text-text-muted">{source.purpose}</p>
+            <Badge tone={meta.tone} className="shrink-0">
+              {meta.label}
+            </Badge>
           </div>
-          <Badge tone={meta.tone}>{meta.label}</Badge>
+          <p className="text-[13px] leading-relaxed text-text-muted">{source.purpose}</p>
         </div>
 
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[12.5px]">

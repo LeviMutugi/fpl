@@ -14,6 +14,12 @@ export type TableProps = {
   /** Caption is the table's accessible name; visually hidden by default. */
   caption?: string;
   captionVisible?: boolean;
+  /**
+   * Wrap the table in its own horizontal scroller. Leave this on unless the
+   * table already sits in a `TableFrame` — that provides the scroll container,
+   * and a second one nested inside it would break the sticky header.
+   */
+  scroll?: boolean;
 };
 
 /**
@@ -28,8 +34,9 @@ export function Table({
   dense = false,
   caption,
   captionVisible = false,
+  scroll = true,
 }: TableProps) {
-  return (
+  const table = (
     <table
       data-dense={dense || undefined}
       className={cn(
@@ -50,6 +57,14 @@ export function Table({
       ) : null}
       {children}
     </table>
+  );
+
+  // A table wider than its column is the one thing that must never widen the
+  // document — a page that scrolls sideways is broken on every phone.
+  return scroll ? (
+    <div className="w-full max-w-full overflow-x-auto scrollbar-slim">{table}</div>
+  ) : (
+    table
   );
 }
 

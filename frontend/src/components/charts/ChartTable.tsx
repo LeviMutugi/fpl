@@ -14,8 +14,8 @@ export type ChartTableProps = {
 export function ChartTable({ caption, columns, rows, visible = false }: ChartTableProps) {
   if (rows.length === 0) return null;
 
-  return (
-    <table className={visible ? 'num w-full text-left text-[12px]' : 'sr-only'}>
+  const table = (
+    <table className={visible ? 'num w-full text-left text-[12px]' : undefined}>
       <caption className={visible ? 'sr-only' : undefined}>{caption}</caption>
       <thead>
         <tr>
@@ -43,4 +43,9 @@ export function ChartTable({ caption, columns, rows, visible = false }: ChartTab
       </tbody>
     </table>
   );
+
+  // `sr-only` has to go on a wrapping div, not the table. Its `width: 1px` is
+  // only a *minimum* under auto table layout, so a nowrap table ignores it,
+  // grows to its content width and drags the page into horizontal scroll.
+  return visible ? table : <div className="sr-only">{table}</div>;
 }

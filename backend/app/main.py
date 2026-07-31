@@ -17,6 +17,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from pydantic import BaseModel, Field
 
 from . import config, db as dbm, service
@@ -548,5 +549,24 @@ def health() -> dict[str, Any]:
     }
 
 
+class SpaStaticFiles(StaticFiles):
+    """Static files with a client-router fallback.
+
+    The console routes on the client, so `/models` is a real URL a user can
+    bookmark or refresh but not a file on disk. Plain `StaticFiles` answers 404
+    there and the page dies on reload. Anything that looks like a build asset
+    still 404s honestly — a missing chunk is a deployment fault and must not be
+    disguised as the index page.
+    """
+
+    async def get_response(self, path: str, scope):
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code != 404 or path.startswith("assets/") or "." in path.rsplit("/", 1)[-1]:
+                raise
+            return await super().get_response("index.html", scope)
+
+
 if config.FRONTEND_DIST.exists():
-    app.mount("/", StaticFiles(directory=str(config.FRONTEND_DIST), html=True), name="frontend")
+    app.mount("/", SpaStaticFiles(directory=str(config.FRONTEND_DIST), html=True), name="frontend")

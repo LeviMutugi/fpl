@@ -535,7 +535,7 @@ export default function TransfersPage() {
               spacing="sm"
             >
               <TableFrame>
-                <Table caption="Solved squad" captionVisible={false}>
+                <Table scroll={false} caption="Solved squad" captionVisible={false}>
                   <TableHead>
                     <TableRow>
                       <TableHeaderCell>Player</TableHeaderCell>
