@@ -939,6 +939,9 @@ def captaincy(conn: sqlite3.Connection, *, model: str = "ensemble", event: int |
         rows.append(
             {
                 **{k: p[k] for k in ("id", "code", "web_name", "team", "team_id", "position", "price", "photo", "ownership", "status", "news")},
+                # The full prediction rides along so the spread chart draws the
+                # stored quantiles rather than re-deriving them from the mean.
+                "prediction": pred,
                 "xp": pred["xp"],
                 "captain_xp": round(pred["xp"] * 2, 3),
                 "p_haul": pred["p_haul"],

@@ -26,7 +26,7 @@ import {
   nextSort,
   type SortState,
 } from '@/components/ui';
-import { NO_DATA, money, num, pct } from '@/lib/format';
+import { NO_DATA, money, num, ownership } from '@/lib/format';
 import { usePrefs } from '@/lib/prefs';
 import { useUiStore } from '@/lib/uiStore';
 import { usePlayers, useTeams } from '@/hooks/useEngine';
@@ -108,7 +108,7 @@ function PlayerRowCells({ player, onOpen }: { player: PlayerRow; onOpen: () => v
         {player.value_per_million === null ? NO_DATA : num(player.value_per_million, 2)}
       </TableCell>
       <TableCell align="right" numeric>
-        {pct(player.ownership)}
+        {ownership(player.ownership)}
       </TableCell>
       <TableCell align="right" numeric>
         {player.season ? num(player.season.xgi90, 2) : NO_DATA}

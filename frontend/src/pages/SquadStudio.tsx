@@ -2,7 +2,7 @@ import { RefreshCw, Wand2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { StackedBarChart } from '@/components/charts';
+import { ChartLegend, StackedBarChart } from '@/components/charts';
 import { Pitch, PitchSlot, PlayerChip } from '@/components/football';
 import { ROW_BENCH, ROW_MID } from '@/components/football/FormationSlots';
 import { StatTile } from '@/components/kokonut';
@@ -64,26 +64,31 @@ function DecompositionCard({ solve }: { solve: OptimizeResponse }) {
       },
     }));
 
+  // One list drives both the stack order and the legend, so a colour can never
+  // mean one thing in the bars and another in the key.
+  const keys = [
+    { id: 'appearance', label: 'Appearance' },
+    { id: 'goals', label: 'Goals' },
+    { id: 'assists', label: 'Assists' },
+    { id: 'clean_sheet', label: 'Clean sheet' },
+    { id: 'saves', label: 'Saves' },
+    { id: 'bonus', label: 'Bonus' },
+    { id: 'negative', label: 'Deductions' },
+  ];
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Where the expected points come from</CardTitle>
       </CardHeader>
-      <CardBody>
+      <CardBody className="space-y-3">
+        <ChartLegend entries={keys} />
         <StackedBarChart
           data={data}
           orientation="horizontal"
           height={Math.max(240, data.length * 30)}
           ariaLabel="Expected points decomposition per starting player"
-          keys={[
-            { id: 'appearance', label: 'Appearance' },
-            { id: 'goals', label: 'Goals' },
-            { id: 'assists', label: 'Assists' },
-            { id: 'clean_sheet', label: 'Clean sheet' },
-            { id: 'saves', label: 'Saves' },
-            { id: 'bonus', label: 'Bonus' },
-            { id: 'negative', label: 'Deductions' },
-          ]}
+          keys={keys}
         />
       </CardBody>
     </Card>

@@ -19,7 +19,7 @@ import {
   TableHeaderCell,
   TableRow,
 } from '@/components/ui';
-import { NO_DATA, money, num, pct } from '@/lib/format';
+import { NO_DATA, money, num, ownership, pct } from '@/lib/format';
 import { usePrefs } from '@/lib/prefs';
 import { useDifferentials } from '@/hooks/useEngine';
 
@@ -141,7 +141,7 @@ export default function DifferentialsPage() {
                         {money(player.price)}
                       </TableCell>
                       <TableCell align="right" numeric>
-                        {pct(player.ownership)}
+                        {ownership(player.ownership)}
                       </TableCell>
                       <TableCell align="right" numeric>
                         {num(player.xp, 2)}
@@ -150,7 +150,7 @@ export default function DifferentialsPage() {
                         {player.xp_horizon === null ? NO_DATA : num(player.xp_horizon, 1)}
                       </TableCell>
                       <TableCell align="right" numeric>
-                        {pct(player.p_haul * 100)}
+                        {pct(player.p_haul, 1)}
                       </TableCell>
                       <TableCell align="right" numeric>
                         {player.value_per_million === null

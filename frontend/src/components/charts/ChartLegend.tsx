@@ -1,5 +1,5 @@
 import { cn } from '@/lib/cn';
-import { seriesColor } from '@/lib/tokens';
+import { slotColor } from './chartUtils';
 
 export type LegendEntry = {
   id: string;
@@ -46,7 +46,7 @@ export function ChartLegend({
       )}
     >
       {entries.map((entry, index) => {
-        const colour = entry.token ? `var(--${entry.token})` : seriesColor(index);
+        const colour = slotColor(entry.token, index);
         const dimmed = activeId !== null && activeId !== entry.id;
         const content = (
           <>

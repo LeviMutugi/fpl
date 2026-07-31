@@ -15,7 +15,7 @@ import {
   SkeletonRows,
 } from '@/components/ui';
 import { ApiRequestError } from '@/lib/api';
-import { NO_DATA, num, pct } from '@/lib/format';
+import { NO_DATA, num, ownership, pct } from '@/lib/format';
 import { usePrefs } from '@/lib/prefs';
 import { useCaptaincy, type CaptaincyRow } from '@/hooks/useEngine';
 import type { ViolinDatum } from '@/components/charts';
@@ -120,7 +120,7 @@ function CandidateCard({ row, rank }: { row: CaptaincyRow; rank: number }) {
           </Badge>
           <Badge tone="neutral" size="xs">
             Effective ownership{' '}
-            {row.effective_ownership === null ? NO_DATA : pct(row.effective_ownership, 1)}
+            {row.effective_ownership === null ? NO_DATA : ownership(row.effective_ownership)}
           </Badge>
         </div>
       </CardBody>
@@ -141,7 +141,7 @@ export default function CaptainPage() {
       candidates
         .slice(0, 6)
         .filter((row): row is CaptaincyRow & { prediction: NonNullable<CaptaincyRow['prediction']> } =>
-          row.prediction !== null,
+          Boolean(row.prediction),
         )
         .map((row) => ({
           id: String(row.id),

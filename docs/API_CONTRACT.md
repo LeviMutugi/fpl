@@ -246,7 +246,10 @@ type SquadPlayer = PlayerRow & {
 ## Other endpoints
 
 - `GET /api/captaincy?event=&model=` → ranked captain candidates with
-  `xp`, `p_haul`, `p_blank`, `ceiling`, `eo` (effective ownership), `risk_adjusted`.
+  `xp`, `p_haul`, `p_blank`, `ceiling`, `effective_ownership`, `risk_adjusted`,
+  plus the full `prediction` block (including the stored `p10`…`p90` quantiles)
+  so a client can draw the spread without re-deriving it from the mean.
+  `effective_ownership` is `null` until the game publishes captaincy counts.
 - `GET /api/differentials?max_ownership=&event=` → high-xP, low-ownership players.
 - `GET /api/chips` → chip windows from the FPL API plus, per chip, the solver's
   best scoring gameweek over the horizon.

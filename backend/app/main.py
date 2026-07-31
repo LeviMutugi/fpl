@@ -6,6 +6,8 @@ single source of truth.
 """
 from __future__ import annotations
 
+import html
+import re
 import sqlite3
 from contextlib import asynccontextmanager
 from typing import Any
@@ -455,19 +457,79 @@ async def get_badge(code: int, size: int = 70) -> Response:
             continue
         if resp.status_code == 200:
             return Response(resp.content, media_type="image/png")
-    return RedirectResponse(f"/api/photo/{code}?size=sm")
+    # Not the player route: `code` here is a *team* code, and the two namespaces
+    # overlap, so falling through to /api/photo would draw some unrelated
+    # player's initials as a club crest.
+    return Response(_crest_svg(code), media_type="image/svg+xml")
+
+
+def _crest_svg(code: int) -> bytes:
+    """Club crest stand-in: the three-letter short name on the club's colour.
+
+    The club's own `primary_hex` is used when the bootstrap supplied one, so a
+    missing badge still lands in roughly the right place visually.
+    """
+    row = conn().execute(
+        "SELECT short_name, name, primary_hex FROM teams WHERE code = ?", (code,)
+    ).fetchone()
+    text = (row["short_name"] if row else "") or "?"
+    label = (row["name"] if row else "") or str(code)
+    hex_value = row["primary_hex"] if row else None
+    fill = hex_value if hex_value and re.fullmatch(r"#[0-9a-fA-F]{6}", hex_value) else None
+    hue = (abs(code or 1) * 137.508) % 360
+    top = fill or f"hsl({hue:.1f}, 44%, 46%)"
+    bottom = fill or f"hsl({(hue + 7) % 360:.1f}, 48%, 30%)"
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="{html.escape(label)}">
+  <defs><linearGradient id="c" x1="0" y1="0" x2="0.3" y2="1">
+    <stop offset="0%" stop-color="{top}"/>
+    <stop offset="100%" stop-color="{bottom}"/>
+  </linearGradient></defs>
+  <circle cx="50" cy="50" r="48" fill="url(#c)"/>
+  <text x="50" y="53" text-anchor="middle" dominant-baseline="central"
+        font-family="Outfit, Inter, system-ui, sans-serif"
+        font-size="30" font-weight="700" letter-spacing="-1"
+        fill="rgba(255,255,255,.94)">{html.escape(text[:3].upper())}</text>
+</svg>""".encode()
+
+
+def _initials(name: str) -> str:
+    """First and last initial, matching the client's `initials()` helper."""
+    words = [w for w in re.split(r"[\s-]+", re.sub(r"[^\w\s'-]", " ", name)) if w]
+    if not words:
+        return "?"
+    if len(words) == 1:
+        return words[0][:2].upper()
+    return (words[0][0] + words[-1][0]).upper()
 
 
 def _monogram_svg(code: int) -> bytes:
-    hue = (code * 47) % 360
-    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-    <stop offset="0%" stop-color="hsl({hue} 45% 42%)"/>
-    <stop offset="100%" stop-color="hsl({hue} 45% 26%)"/>
+    """The terminal rung of the photo ladder: an initials plate.
+
+    The code alone would only give a colour, so the player's name is read back
+    from the database — a plate that says `EH` is a usable stand-in for a
+    photograph, whereas a generic silhouette says nothing at all. The hue uses
+    the same golden-angle walk as the client monogram, so the same player gets
+    the same colour whichever rung ends up drawing them.
+    """
+    row = conn().execute("SELECT web_name FROM players WHERE code = ?", (code,)).fetchone()
+    label = row["web_name"] if row else ""
+    text = _initials(label) if label else "?"
+    # An SVG served to an <img> renders in its own document, and Chromium's
+    # presentation-attribute parser does not accept oklch() there — the stops
+    # would silently drop out and leave white text on a blank plate. hsl() is
+    # understood everywhere, so the fallback uses it deliberately.
+    hue = (abs(code or 1) * 137.508) % 360
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="{html.escape(label or str(code))}">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="0.4" y2="1">
+    <stop offset="0%" stop-color="hsl({hue:.1f}, 44%, 46%)"/>
+    <stop offset="100%" stop-color="hsl({(hue + 7) % 360:.1f}, 48%, 30%)"/>
   </linearGradient></defs>
   <rect width="100" height="100" rx="28" fill="url(#g)"/>
-  <circle cx="50" cy="38" r="15" fill="rgba(255,255,255,.35)"/>
-  <path d="M22 88c0-16 12.5-26 28-26s28 10 28 26z" fill="rgba(255,255,255,.35)"/>
+  <ellipse cx="50" cy="118" rx="44" ry="42" fill="rgba(255,255,255,.10)"/>
+  <text x="50" y="52" text-anchor="middle" dominant-baseline="central"
+        font-family="Outfit, Inter, system-ui, sans-serif"
+        font-size="{30 if len(text) > 2 else 38}" font-weight="650"
+        fill="rgba(255,255,255,.92)">{html.escape(text)}</text>
 </svg>""".encode()
 
 

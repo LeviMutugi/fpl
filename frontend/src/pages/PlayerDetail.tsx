@@ -17,7 +17,7 @@ import {
   Skeleton,
   Tooltip,
 } from '@/components/ui';
-import { NO_DATA, dateTime, money, num, pct } from '@/lib/format';
+import { NO_DATA, dateTime, money, num, ownership, pct } from '@/lib/format';
 import { usePrefs } from '@/lib/prefs';
 import { usePlayer } from '@/hooks/useEngine';
 
@@ -95,7 +95,7 @@ export default function PlayerDetailPage() {
               {player.team_name}
             </span>
             <span className="tabular-nums">{money(player.price)}</span>
-            <span className="tabular-nums">{pct(player.ownership)} owned</span>
+            <span className="tabular-nums">{ownership(player.ownership)} owned</span>
             {player.set_pieces.penalties !== null && (
               <Tooltip content="Penalty order published by the game">
                 <span>Pens #{player.set_pieces.penalties}</span>
@@ -125,7 +125,7 @@ export default function PlayerDetailPage() {
           label="Expected minutes"
           value={prediction?.exp_minutes ?? null}
           decimals={0}
-          hint={prediction ? `${pct((prediction.p_start ?? 0) * 100)} chance of starting` : undefined}
+          hint={prediction ? `${pct(prediction.p_start, 0)} chance of starting` : undefined}
         />
         <StatTile
           label="Haul probability"
@@ -349,7 +349,7 @@ export default function PlayerDetailPage() {
                     {player.odds.slice(0, 6).map((market, index) => (
                       <li key={index} className="flex justify-between gap-2">
                         <span className="text-text-muted">{market.market}</span>
-                        <span className="tabular-nums">{pct(market.implied_prob * 100)}</span>
+                        <span className="tabular-nums">{pct(market.implied_prob, 1)}</span>
                       </li>
                     ))}
                   </ul>

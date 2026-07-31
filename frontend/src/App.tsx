@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react';
-import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 
+import { RouteBoundary } from '@/components/RouteBoundary';
 import { AppShell } from '@/components/layout';
 import { Skeleton, ToastViewport, type CommandItem } from '@/components/ui';
 import { NAV } from '@/lib/nav';
@@ -63,6 +64,7 @@ function PageFallback() {
 
 export default function App() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const commands: CommandItem[] = NAV.map((item) => {
     const Icon = item.icon;
@@ -77,24 +79,26 @@ export default function App() {
 
   return (
     <AppShell gameweek={<GameweekBadge />} freshness={<FreshnessBadge />} commandItems={commands}>
-      <Suspense fallback={<PageFallback />}>
-        <Routes>
-          <Route path="/" element={<Overview />} />
-          <Route path="/pitch" element={<SquadStudio />} />
-          <Route path="/players" element={<Players />} />
-          <Route path="/players/:id" element={<PlayerDetail />} />
-          <Route path="/fixtures" element={<Fixtures />} />
-          <Route path="/transfers" element={<Transfers />} />
-          <Route path="/captain" element={<Captain />} />
-          <Route path="/differentials" element={<Differentials />} />
-          <Route path="/models" element={<Models />} />
-          <Route path="/chips" element={<Chips />} />
-          <Route path="/sources" element={<Sources />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/showcase" element={<Showcase />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
+      <RouteBoundary resetKey={location.pathname}>
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route path="/" element={<Overview />} />
+            <Route path="/pitch" element={<SquadStudio />} />
+            <Route path="/players" element={<Players />} />
+            <Route path="/players/:id" element={<PlayerDetail />} />
+            <Route path="/fixtures" element={<Fixtures />} />
+            <Route path="/transfers" element={<Transfers />} />
+            <Route path="/captain" element={<Captain />} />
+            <Route path="/differentials" element={<Differentials />} />
+            <Route path="/models" element={<Models />} />
+            <Route path="/chips" element={<Chips />} />
+            <Route path="/sources" element={<Sources />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/showcase" element={<Showcase />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </RouteBoundary>
 
       <ToastViewport />
     </AppShell>

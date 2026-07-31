@@ -6,8 +6,9 @@ import { FixtureTicker, PlayerImage, TeamBadge } from '@/components/football';
 import { AnimatedNumber, BentoGrid, BentoItem, GlowCard, StatTile } from '@/components/kokonut';
 import { QueryError } from '@/components/QueryState';
 import { MetricRow, PageHeader, Section } from '@/components/layout';
-import { Badge, Button, Card, CardBody, EmptyState, SkeletonRows } from '@/components/ui';
-import { money, num, pct } from '@/lib/format';
+import { Button, Card, CardBody, EmptyState, PositionPill, SkeletonRows } from '@/components/ui';
+import { cn } from '@/lib/cn';
+import { money, num, ownership } from '@/lib/format';
 import { usePrefs } from '@/lib/prefs';
 import { useCaptaincy, useDifferentials, useMeta, usePlayers } from '@/hooks/useEngine';
 
@@ -57,6 +58,8 @@ export default function OverviewPage() {
         <StatTile
           label="Players scored"
           value={meta.data?.active_run?.n_players ?? null}
+          decimals={0}
+          group
           hint="Every player with a prediction in the active run"
         />
         <StatTile
@@ -68,11 +71,15 @@ export default function OverviewPage() {
         <StatTile
           label="Fixtures scheduled"
           value={meta.data?.counts.fixtures ?? null}
+          decimals={0}
+          group
           hint="Full published calendar"
         />
         <StatTile
           label="FPL managers"
           value={meta.data?.total_fpl_players ?? null}
+          decimals={0}
+          group
           hint="Total entries, from the game's own bootstrap"
         />
       </MetricRow>
@@ -95,46 +102,66 @@ export default function OverviewPage() {
               <BentoItem key={player.id} colSpan={index === 0 ? 2 : 1}>
                 <Link to={`/players/${player.id}`} className="block h-full focus-visible:outline-none">
                   <GlowCard className="h-full">
-                    <div className="flex h-full items-center gap-4 p-4">
-                      <PlayerImage
-                        code={player.code}
-                        name={player.web_name}
-                        candidates={player.photo.candidates}
-                        size={index === 0 ? 'lg' : 'md'}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <TeamBadge code={player.team_code} name={player.team} size="sm" />
-                          <span className="truncate font-display text-[15px] font-semibold">
+                    {/* Stacked rather than side-by-side: the narrow bento cells
+                        are too tight for a horizontal row, and a name that
+                        truncates to nothing is worse than one that wraps. */}
+                    <div className="flex h-full flex-col gap-3 p-4">
+                      <div className="flex items-start gap-3">
+                        <PlayerImage
+                          code={player.code}
+                          name={player.web_name}
+                          candidates={player.photo.candidates}
+                          size={index === 0 ? 'lg' : 'md'}
+                          ring={`var(--color-pos-${player.position.toLowerCase()})`}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-display text-[16px] font-semibold leading-snug">
                             {player.web_name}
+                          </p>
+                          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-text-muted">
+                            <TeamBadge
+                              code={player.team_code}
+                              name={player.team}
+                              shortName={player.team}
+                              primaryHex={player.team_primary_hex ?? undefined}
+                              size="xs"
+                            />
+                            <span>{player.team}</span>
+                            <PositionPill position={player.position} size="xs" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[12px] text-text-muted">
+                        <span className="num">{money(player.price)}</span>
+                        <span className="num">{ownership(player.ownership, 0)} owned</span>
+                        {player.prediction?.fixture.opponent && (
+                          <span>
+                            {player.prediction.fixture.is_home ? 'vs' : 'at'}{' '}
+                            {player.prediction.fixture.opponent}
                           </span>
-                          <Badge tone="neutral">
-                            {player.position}
-                          </Badge>
-                        </div>
-                        <div className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[12.5px] text-text-muted">
-                          <span className="tabular-nums">{money(player.price)}</span>
-                          <span className="tabular-nums">{pct(player.ownership)} owned</span>
-                          {player.prediction?.fixture.opponent && (
-                            <span>
-                              vs {player.prediction.fixture.opponent}
-                              {player.prediction.fixture.is_home ? ' (H)' : ' (A)'}
-                            </span>
-                          )}
-                        </div>
-                        {player.prediction && (
-                          <div className="mt-2.5 flex items-baseline gap-2">
+                        )}
+                      </div>
+
+                      {player.prediction && (
+                        <div className="mt-auto">
+                          <div className="flex items-baseline gap-1.5">
                             <AnimatedNumber
                               value={player.prediction.xp}
                               decimals={2}
-                              className="font-display text-[22px] font-semibold tabular-nums"
+                              className={cn(
+                                'font-display font-semibold num',
+                                index === 0 ? 'text-[34px]' : 'text-[24px]',
+                              )}
                             />
-                            <span className="text-[12px] text-text-faint">
-                              xP · p10 {num(player.prediction.p10, 0)} – p90 {num(player.prediction.p90, 0)}
-                            </span>
+                            <span className="text-[12px] text-text-faint">xP</span>
                           </div>
-                        )}
-                      </div>
+                          <p className="mt-0.5 text-[11.5px] text-text-faint num">
+                            p10 {num(player.prediction.p10, 1)} – p90{' '}
+                            {num(player.prediction.p90, 1)}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </GlowCard>
                 </Link>
@@ -212,7 +239,7 @@ export default function OverviewPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[13.5px] font-medium">{player.web_name}</p>
                       <p className="text-[12px] text-text-faint">
-                        {player.team} · {money(player.price)} · {pct(player.ownership)} owned
+                        {player.team} · {money(player.price)} · {ownership(player.ownership, 0)} owned
                       </p>
                     </div>
                     <span className="font-display text-[15px] font-semibold tabular-nums">

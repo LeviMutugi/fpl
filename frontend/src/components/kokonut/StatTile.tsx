@@ -24,6 +24,8 @@ export type StatTileProps = {
   className?: string;
   /** Skip the counter animation (e.g. inside a dense table). */
   animate?: boolean;
+  /** Thousands separators — for counts, not for rates. */
+  group?: boolean;
 };
 
 const VALUE_SIZE = {
@@ -51,6 +53,7 @@ export function StatTile({
   size = 'md',
   className,
   animate = true,
+  group = false,
 }: StatTileProps) {
   const good = delta === null ? null : invertDelta ? delta < 0 : delta > 0;
   const flat = delta !== null && Math.abs(delta) < 1e-9;
@@ -85,9 +88,19 @@ export function StatTile({
                 decimals={decimals}
                 prefix={prefix}
                 suffix={suffix}
+                group={group}
               />
             ) : (
-              <span className="num">{`${prefix}${value.toFixed(decimals)}${suffix}`}</span>
+              <span className="num">
+                {`${prefix}${
+                  group
+                    ? value.toLocaleString('en-GB', {
+                        minimumFractionDigits: decimals,
+                        maximumFractionDigits: decimals,
+                      })
+                    : value.toFixed(decimals)
+                }${suffix}`}
+              </span>
             )}
           </p>
           {delta !== null ? (

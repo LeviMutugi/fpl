@@ -66,7 +66,7 @@ export function BarChart({
 
   const vertical = orientation === 'vertical';
   const m = withMargin(
-    margin ?? (vertical ? {} : { left: 96, bottom: 24 }),
+    margin ?? (vertical ? {} : { left: 96, bottom: 24, right: 30 }),
   );
   const area = plotArea(size, m);
   const hasAny = data.some((d) => d.value !== null && Number.isFinite(d.value));

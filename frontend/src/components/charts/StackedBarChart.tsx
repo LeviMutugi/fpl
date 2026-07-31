@@ -79,7 +79,7 @@ export function StackedBarChart({
   const tip = useChartTooltip<{ stack: Stack; segment: Segment }>();
 
   const vertical = orientation === 'vertical';
-  const m = withMargin(margin ?? (vertical ? {} : { left: 104, bottom: 24 }));
+  const m = withMargin(margin ?? (vertical ? {} : { left: 104, bottom: 24, right: 30 }));
   const area = plotArea(size, m);
 
   const stacks = useMemo(() => buildStacks(data, keys), [data, keys]);

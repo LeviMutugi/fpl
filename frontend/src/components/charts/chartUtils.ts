@@ -26,9 +26,21 @@ export function clampUnit(value: number): number {
   return value < 0 ? 0 : value > 1 ? 1 : value;
 }
 
-/** A datum's own token wins; otherwise the categorical slot for its index. */
+/**
+ * A datum's own colour wins; otherwise the categorical slot for its index.
+ *
+ * Usually the caller names a design token (`'color-series-3'`) and it is
+ * wrapped in `var()`. Some colours arrive as data rather than design — a club's
+ * `primary_hex`, a model's registered hue — and those are already resolvable
+ * colours. Wrapping one of those in `var()` yields a custom property that does
+ * not exist, and SVG silently paints it black, so a value that already looks
+ * like a colour is passed straight through.
+ */
+const RESOLVED_COLOUR = /^(#|rgb|hsl|oklch|oklab|lab|lch|color\(|color-mix\(|var\(|transparent$|currentColor$)/i;
+
 export function slotColor(name: string | undefined, index: number): string {
-  return name ? token(name) : seriesColor(index);
+  if (!name) return seriesColor(index);
+  return RESOLVED_COLOUR.test(name) ? name : token(name);
 }
 
 /**
