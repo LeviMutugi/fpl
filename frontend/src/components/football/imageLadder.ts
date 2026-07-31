@@ -29,6 +29,42 @@ function usableCode(code: number): boolean {
   return Number.isFinite(code) && code > 0;
 }
 
+/**
+ * Whether the Premier League CDN is worth trying at all.
+ *
+ * A squad page renders dozens of avatars, each with several CDN candidates
+ * ahead of the backend resolver. When the CDN is unreachable — hotlink
+ * protection, an offline box, an egress policy — that is hundreds of requests
+ * that can only fail, and every avatar waits out its own round trip before
+ * reaching the rung that works. After a run of consecutive failures with no
+ * success in between, the CDN rungs are dropped for the rest of the session and
+ * the ladder starts at the resolver. One success clears the count, so a slow
+ * start or a handful of genuinely missing photos never trips it.
+ */
+const CDN_HOST = 'resources.premierleague.com';
+const CDN_FAILURE_LIMIT = 12;
+let cdnFailures = 0;
+
+function cdnLooksDown(): boolean {
+  return cdnFailures >= CDN_FAILURE_LIMIT;
+}
+
+export function noteImageOutcome(url: string | null, ok: boolean): void {
+  if (!url || !url.includes(CDN_HOST)) return;
+  cdnFailures = ok ? 0 : cdnFailures + 1;
+}
+
+/** Test seam — the counter is module state, so it must be resettable. */
+export function resetCdnHealth(): void {
+  cdnFailures = 0;
+}
+
+function withoutCdn(urls: string[]): string[] {
+  const kept = urls.filter((url) => !url.includes(CDN_HOST));
+  // Never return an empty ladder: if every rung was a CDN URL, keep them.
+  return kept.length > 0 ? kept : urls;
+}
+
 /** `110x140` for the small renditions, `250x250` for everything larger. */
 export type PhotoDim = '110x140' | '250x250';
 
@@ -43,13 +79,14 @@ export function playerPhotoCandidates(
   candidates?: readonly string[],
 ): string[] {
   if (!usableCode(code)) return dedupe(candidates ?? []);
-  return dedupe([
+  const ladder = dedupe([
     ...(candidates ?? []),
     `https://resources.premierleague.com/premierleague26/photos/players/${dim}/${code}.png`,
     `https://resources.premierleague.com/premierleague25/photos/players/${dim}/${code}.png`,
     `https://resources.premierleague.com/premierleague/photos/players/${dim}/p${code}.png`,
     photoProxyUrl(code, 'md'),
   ]);
+  return cdnLooksDown() ? withoutCdn(ladder) : ladder;
 }
 
 export type BadgeDim = 50 | 70 | 100;
@@ -61,12 +98,13 @@ export function teamBadgeCandidates(
   candidates?: readonly string[],
 ): string[] {
   if (!usableCode(code)) return dedupe(candidates ?? []);
-  return dedupe([
+  const ladder = dedupe([
     ...(candidates ?? []),
     `https://resources.premierleague.com/premierleague/badges/${dim}/t${code}.png`,
     `https://resources.premierleague.com/premierleague/badges/t${code}.png`,
     badgeProxyUrl(code),
   ]);
+  return cdnLooksDown() ? withoutCdn(ladder) : ladder;
 }
 
 export type ImageLadder = {
@@ -102,16 +140,20 @@ export function useImageLadder(urls: readonly string[]): ImageLadder {
   const index = state.key === key ? state.index : 0;
   const loaded = state.key === key ? state.loaded : false;
 
+  const current = urls[index] ?? null;
+
   const onLoad = useCallback(() => {
+    noteImageOutcome(current, true);
     setState((prev) => (prev.loaded ? prev : { ...prev, loaded: true }));
-  }, []);
+  }, [current]);
 
   const onError = useCallback(() => {
+    noteImageOutcome(current, false);
     setState((prev) => ({ ...prev, index: prev.index + 1, loaded: false }));
-  }, []);
+  }, [current]);
 
   return {
-    src: urls[index] ?? null,
+    src: current,
     loaded,
     exhausted: index >= urls.length,
     onLoad,
