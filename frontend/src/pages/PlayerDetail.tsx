@@ -77,7 +77,7 @@ export default function PlayerDetailPage() {
         <PlayerImage
           code={player.code}
           name={player.web_name}
-          photoCandidates={player.photo.candidates}
+          candidates={player.photo.candidates}
           size="xl"
         />
         <div className="min-w-0 flex-1">

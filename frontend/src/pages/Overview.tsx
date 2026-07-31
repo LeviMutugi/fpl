@@ -98,7 +98,7 @@ export default function OverviewPage() {
                       <PlayerImage
                         code={player.code}
                         name={player.web_name}
-                        photoCandidates={player.photo.candidates}
+                        candidates={player.photo.candidates}
                         size={index === 0 ? 'lg' : 'md'}
                       />
                       <div className="min-w-0 flex-1">
@@ -157,7 +157,7 @@ export default function OverviewPage() {
                   <PlayerImage
                     code={captain.code}
                     name={captain.web_name}
-                    photoCandidates={captain.photo.candidates}
+                    candidates={captain.photo.candidates}
                     size="lg"
                   />
                   <div className="min-w-0">
@@ -208,7 +208,7 @@ export default function OverviewPage() {
                     <PlayerImage
                       code={player.code}
                       name={player.web_name}
-                      photoCandidates={player.photo.candidates}
+                      candidates={player.photo.candidates}
                       size="sm"
                     />
                     <div className="min-w-0 flex-1">

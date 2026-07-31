@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
-import { NO_DATA, num, ownership as fmtOwnership } from '@/lib/format';
+import { money, num, ownership as fmtOwnership } from '@/lib/format';
 import { positionColor } from '@/lib/tokens';
 import { Card } from '@/components/ui/Card';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -148,7 +148,7 @@ export function PlayerCard({
         role: 'button' as const,
         tabIndex: 0,
         onClick: () => onSelect?.(player.id),
-        onKeyDown: (event: React.KeyboardEvent<HTMLDivElement>) => {
+        onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             onSelect?.(player.id);
@@ -196,7 +196,6 @@ export function PlayerCard({
     'group min-w-0',
     interactive &&
       'cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[color:var(--color-ring)]',
-    selected && 'ring-2 ring-inset',
     className,
   );
 
@@ -262,7 +261,7 @@ export function PlayerCard({
         </div>
 
         <div className="grid shrink-0 grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
-          <MetaStat label="Price" value={player.price === null ? NO_DATA : `£${player.price.toFixed(1)}m`} />
+          <MetaStat label="Price" value={money(player.price)} />
           <MetaStat label="xP" value={xp === null ? NO_DATA : num(xp, 2)} />
           <MetaStat label="Owned" value={fmtOwnership(player.ownership)} />
           <MetaStat label="Form" value={num(player.form, 1)} />

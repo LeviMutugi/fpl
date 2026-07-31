@@ -1,9 +1,10 @@
-import { Lock, RefreshCw, Shuffle, Sparkles, Wand2 } from 'lucide-react';
+import { RefreshCw, Shuffle, Sparkles, Wand2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { StackedBarChart } from '@/components/charts';
 import { Pitch, PitchSlot, PlayerChip } from '@/components/football';
+import { ROW_BENCH, ROW_MID } from '@/components/football/FormationSlots';
 import { AnimatedNumber, StatTile } from '@/components/kokonut';
 import { MetricRow, PageHeader, Section } from '@/components/layout';
 import {
@@ -23,9 +24,8 @@ import {
 } from '@/components/ui';
 import { money, num } from '@/lib/format';
 import { usePrefs } from '@/lib/prefs';
-import { slotPositions } from '@/components/football/FormationSlots';
 import { useMeta, useOptimize } from '@/hooks/useEngine';
-import type { ChipName, OptimizeResponse, SquadPlayer } from '@/types/api';
+import type { ChipName, OptimizeResponse } from '@/types/api';
 
 /**
  * The pitch is the product. Everything else on this page is a control that
@@ -44,11 +44,6 @@ const CHIPS: { value: ChipName; label: string; hint: string }[] = [
 
 const FORMATIONS = ['auto', '3-4-3', '3-5-2', '4-4-2', '4-3-3', '4-5-1', '5-3-2', '5-4-1'];
 
-function xiByRow(xi: SquadPlayer[]): Record<string, SquadPlayer[]> {
-  const rows: Record<string, SquadPlayer[]> = { GKP: [], DEF: [], MID: [], FWD: [] };
-  for (const player of xi) rows[player.position]?.push(player);
-  return rows;
-}
 
 function DecompositionCard({ solve }: { solve: OptimizeResponse }) {
   // The component breakdown is read straight from the stored prediction, so the
@@ -104,7 +99,7 @@ export default function SquadStudioPage() {
   const [maxPerTeam, setMaxPerTeam] = useState(3);
   const [formation, setFormation] = useState('auto');
   const [chip, setChip] = useState<ChipName>('none');
-  const [lockedIn, setLockedIn] = useState<number[]>([]);
+  const [lockedIn] = useState<number[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
 
   const request = useMemo(
@@ -128,14 +123,6 @@ export default function SquadStudioPage() {
   }, [request]);
 
   const solve = optimize.data;
-  const rows = solve ? xiByRow(solve.xi) : null;
-  const slots = solve ? slotPositions(solve.formation) : null;
-
-  const toggleLock = (playerId: number) =>
-    setLockedIn((current) =>
-      current.includes(playerId) ? current.filter((id) => id !== playerId) : [...current, playerId],
-    );
-
   return (
     <>
       <PageHeader
@@ -173,49 +160,42 @@ export default function SquadStudioPage() {
       </MetricRow>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <Section title="The pitch" description="Click a player for detail; use the padlock to force them into the next solve.">
+        <Section
+          title="The pitch"
+          description="Click a player to open their detail. The solver assigned every slot — nothing here is laid out client-side."
+        >
           {optimize.isPending && !solve && <Skeleton className="aspect-[3/4] w-full rounded-3xl" />}
           {optimize.isError && (
             <ErrorState error={optimize.error} onRetry={() => optimize.mutate(request)} />
           )}
-          {solve && rows && slots && (
-            <Pitch formation={solve.formation} showBench>
-              {(['GKP', 'DEF', 'MID', 'FWD'] as const).flatMap((position) =>
-                rows[position].map((player, index) => {
-                  const slot = slots.starters.find(
-                    (s) => s.position === position && s.index === index,
-                  );
-                  if (!slot) return null;
-                  return (
-                    <PitchSlot key={player.id} x={slot.xPct} y={slot.yPct}>
-                      <PlayerChip
-                        player={player}
-                        isCaptain={player.id === solve.captain_id}
-                        isVice={player.id === solve.vice_id}
-                        locked={lockedIn.includes(player.id)}
-                        onSelect={() => setSelected(player.id)}
-                        onToggleLock={() => toggleLock(player.id)}
-                      />
-                    </PitchSlot>
-                  );
-                }),
-              )}
-              {solve.bench.map((player, index) => {
-                const slot = slots.bench[index];
-                if (!slot) return null;
-                return (
-                  <PitchSlot key={player.id} x={slot.xPct} y={slot.yPct} bench>
-                    <PlayerChip
-                      player={player}
-                      compact
-                      benchOrder={index + 1}
-                      locked={lockedIn.includes(player.id)}
-                      onSelect={() => setSelected(player.id)}
-                      onToggleLock={() => toggleLock(player.id)}
-                    />
-                  </PitchSlot>
-                );
-              })}
+          {solve && (
+            <Pitch formation={solve.formation} showBench ariaLabel="Optimised starting eleven">
+              {solve.xi.map((player) => (
+                <PitchSlot
+                  key={player.id}
+                  row={player.pitch_slot?.row ?? ROW_MID}
+                  col={player.pitch_slot?.col ?? 0}
+                  of={player.pitch_slot?.of}
+                >
+                  <PlayerChip
+                    player={player}
+                    isCaptain={player.id === solve.captain_id}
+                    isVice={player.id === solve.vice_id}
+                    selected={selected === player.id}
+                    onSelect={setSelected}
+                  />
+                </PitchSlot>
+              ))}
+              {solve.bench.map((player, index) => (
+                <PitchSlot key={player.id} row={ROW_BENCH} col={index} of={solve.bench.length}>
+                  <PlayerChip
+                    player={player}
+                    compact
+                    selected={selected === player.id}
+                    onSelect={setSelected}
+                  />
+                </PitchSlot>
+              ))}
             </Pitch>
           )}
         </Section>
@@ -295,22 +275,6 @@ export default function SquadStudioPage() {
             </Card>
           </Section>
 
-          {lockedIn.length > 0 && (
-            <Section title="Locked in" icon={<Lock className="size-4" />}>
-              <Card>
-                <CardBody className="flex flex-wrap gap-2">
-                  {lockedIn.map((id) => {
-                    const player = solve?.xi.concat(solve.bench).find((p) => p.id === id);
-                    return (
-                      <button key={id} type="button" onClick={() => toggleLock(id)}>
-                        <Badge tone="neutral">{player?.web_name ?? id} ×</Badge>
-                      </button>
-                    );
-                  })}
-                </CardBody>
-              </Card>
-            </Section>
-          )}
         </div>
       </div>
 

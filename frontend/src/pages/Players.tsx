@@ -61,13 +61,18 @@ function PlayerRowCells({ player, onOpen }: { player: PlayerRow; onOpen: () => v
           <PlayerImage
             code={player.code}
             name={player.web_name}
-            photoCandidates={player.photo.candidates}
+            candidates={player.photo.candidates}
             size="xs"
           />
           <div className="min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="truncate font-medium">{player.web_name}</span>
-              <AvailabilityDot status={player.status} news={player.news} chance={player.chance_of_playing} />
+              <AvailabilityDot
+                status={player.status}
+                news={player.news}
+                chanceOfPlaying={player.chance_of_playing}
+                availability={player.availability}
+              />
             </div>
             <div className="flex items-center gap-1.5 text-[11.5px] text-text-faint">
               <TeamBadge code={player.team_code} name={player.team} size="xs" />
@@ -338,7 +343,7 @@ export default function PlayersPage() {
               <PlayerCard
                 key={player.id}
                 player={player}
-                onSelect={() => navigate(`/players/${player.id}`)}
+                onSelect={(id) => navigate(`/players/${id}`)}
               >
                 {player.horizon && player.horizon.per_event.length > 1 && (
                   <Sparkline data={player.horizon.per_event.map((entry) => entry.xp)} height={26} />
