@@ -37,6 +37,12 @@ const METRIC_COLUMNS: { key: string; label: string; decimals: number; hint: stri
   { key: 'precision_top_decile', label: 'Top 10%', decimals: 3, hint: 'Share of the model’s top decile that is genuinely top decile', higherIsBetter: true },
 ];
 
+/** Drop a trailing parenthetical; "LightGBM quantile" must stay distinct from
+ *  "LightGBM rate-to-points", so this trims rather than takes the first word. */
+function shortName(name: string): string {
+  return name.replace(/\s*\([^)]*\)\s*$/, '');
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
 }
@@ -60,6 +66,12 @@ export default function ModelsPage() {
   const excluded = asRecord(gbm.excluded_features);
   const features = Array.isArray(gbm.features) ? (gbm.features as string[]) : [];
   const lgbmImportance = importance.find((entry) => entry.model_id === 'lgbm');
+
+  // Only the models that actually carry a per-player prediction this gameweek
+  // get a column. Deriving them from the rows rather than the model list keeps
+  // a model that stored no predictions from adding a column of em-dashes.
+  const comparedIds = new Set(disagreement.flatMap((row) => Object.keys(row.by_model)));
+  const compared = models.filter((model) => comparedIds.has(model.model_id));
 
   return (
     <>
@@ -210,13 +222,11 @@ export default function ModelsPage() {
                   <TableHeaderCell>Player</TableHeaderCell>
                   <TableHeaderCell>Pos</TableHeaderCell>
                   <TableHeaderCell align="right">Spread</TableHeaderCell>
-                  {models
-                    .filter((model) => model.family !== 'baseline')
-                    .map((model) => (
-                      <TableHeaderCell key={model.model_id} align="right">
-                        {model.name.split(' ')[0]}
-                      </TableHeaderCell>
-                    ))}
+                  {compared.map((model) => (
+                    <TableHeaderCell key={model.model_id} align="right">
+                      {shortName(model.name)}
+                    </TableHeaderCell>
+                  ))}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -232,15 +242,13 @@ export default function ModelsPage() {
                     <TableCell align="right" numeric>
                       {num(row.spread, 2)}
                     </TableCell>
-                    {models
-                      .filter((model) => model.family !== 'baseline')
-                      .map((model) => (
-                        <TableCell key={model.model_id} align="right" numeric>
-                          {row.by_model[model.model_id] === undefined
-                            ? NO_DATA
-                            : num(row.by_model[model.model_id], 2)}
-                        </TableCell>
-                      ))}
+                    {compared.map((model) => (
+                      <TableCell key={model.model_id} align="right" numeric>
+                        {row.by_model[model.model_id] === undefined
+                          ? NO_DATA
+                          : num(row.by_model[model.model_id], 2)}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>

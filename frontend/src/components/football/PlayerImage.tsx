@@ -106,7 +106,9 @@ export function PlayerImage({
             key={src}
             src={src}
             alt={name}
-            loading="lazy"
+            // The large sizes are hero imagery, above the fold on the detail
+            // page; deferring them costs the page its main visual.
+            loading={size === 'lg' || size === 'xl' ? 'eager' : 'lazy'}
             decoding="async"
             draggable={false}
             onLoad={onLoad}

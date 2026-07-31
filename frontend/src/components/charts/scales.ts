@@ -56,8 +56,16 @@ export function linear(domain: [number, number], range: [number, number]) {
 
 /** Round, human-friendly ticks. Returns at most `count` values. */
 export function niceTicks(domain: [number, number], count = 5): number[] {
+  // `.nice()` widens the domain to round numbers, so its ticks can sit outside
+  // the domain the caller actually scaled with — those ticks then land beyond
+  // the plot area and, because charts render with `overflow-visible`, print
+  // outside the card. Only ticks the scale can place are returned.
+  const [lo, hi] = domain[0] <= domain[1] ? domain : [domain[1], domain[0]];
+  const epsilon = (hi - lo) * 1e-9;
   const scale = scaleLinear().domain(domain).nice(count);
-  return scale.ticks(count);
+  const inside = scale.ticks(count).filter((v) => v >= lo - epsilon && v <= hi + epsilon);
+  // A domain narrower than one tick step would otherwise leave a bare axis.
+  return inside.length > 0 ? inside : [lo, hi];
 }
 
 /**

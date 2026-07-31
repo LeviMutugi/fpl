@@ -8,7 +8,14 @@ import { CategoryAxis, XAxis, YAxis, type AxisTick } from './ChartAxis';
 import { ChartTable } from './ChartTable';
 import { ChartTooltip, useChartTooltip } from './ChartTooltip';
 import { linear, niceTicks } from './scales';
-import { bandLayout, cappedBar, estimateTextWidth, slotColor, valueExtent } from './chartUtils';
+import {
+  bandLayout,
+  cappedBar,
+  categoryGutter,
+  estimateTextWidth,
+  slotColor,
+  valueExtent,
+} from './chartUtils';
 import { plotArea, withMargin, type CategoryDatum, type Margin } from './types';
 
 export type BarChartProps = {
@@ -65,9 +72,8 @@ export function BarChart({
   const tip = useChartTooltip<{ key: string; label: string; value: number }>();
 
   const vertical = orientation === 'vertical';
-  const m = withMargin(
-    margin ?? (vertical ? {} : { left: 96, bottom: 24, right: 30 }),
-  );
+  const gutter = vertical ? 0 : categoryGutter(data.map((d) => d.label ?? d.key), size.width);
+  const m = withMargin(margin ?? (vertical ? {} : { left: gutter, bottom: 24, right: 30 }));
   const area = plotArea(size, m);
   const hasAny = data.some((d) => d.value !== null && Number.isFinite(d.value));
   const ready = size.width > 0 && size.height > 0 && hasAny;
@@ -151,7 +157,13 @@ export function BarChart({
                 ))}
               </g>
               <XAxis area={area} ticks={ticks} line={false} tickSize={0} />
-              <CategoryAxis area={area} bands={bands} orientation="left" every={labelEvery} />
+              <CategoryAxis
+                area={area}
+                bands={bands}
+                orientation="left"
+                every={labelEvery}
+                labelWidth={gutter}
+              />
               <line
                 aria-hidden
                 x1={zero}

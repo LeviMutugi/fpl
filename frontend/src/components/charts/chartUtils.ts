@@ -190,3 +190,40 @@ export function boxesOverlap(a: LabelBox, b: LabelBox, gap = 2): boolean {
 export function fillCount(fraction: number, cells: number): number {
   return Math.round(clampUnit(fraction) * cells);
 }
+
+/**
+ * Approximate rendered width of an axis label.
+ *
+ * Charts draw into SVG, where a label's width is only knowable after layout;
+ * measuring would mean a second render pass on every resize. At the 10.5px axis
+ * size the UI face averages a little under 6px per character, so this estimate
+ * is close enough to size a gutter and slightly generous, which is the safe
+ * direction to be wrong in.
+ */
+export const AXIS_CHAR_WIDTH = 6.1;
+
+export function labelWidth(text: string): number {
+  return text.length * AXIS_CHAR_WIDTH;
+}
+
+/**
+ * Left gutter for a horizontal category axis: wide enough for the longest
+ * label, but never more than 42% of the chart — past that the bars stop being
+ * the point of the chart, and the labels get truncated instead.
+ */
+export function categoryGutter(
+  labels: readonly string[],
+  chartWidth: number,
+  { min = 72, max = 220 }: { min?: number; max?: number } = {},
+): number {
+  const longest = labels.reduce((acc, label) => Math.max(acc, labelWidth(label)), 0);
+  const ceiling = Math.min(max, chartWidth > 0 ? chartWidth * 0.42 : max);
+  return Math.round(Math.max(min, Math.min(ceiling, longest + 14)));
+}
+
+/** Ellipsise to fit `width`, matching `labelWidth`'s estimate. */
+export function truncateToWidth(text: string, width: number): string {
+  const maxChars = Math.floor(width / AXIS_CHAR_WIDTH);
+  if (maxChars <= 1) return '…';
+  return text.length <= maxChars ? text : `${text.slice(0, maxChars - 1).trimEnd()}…`;
+}

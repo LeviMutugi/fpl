@@ -7,7 +7,7 @@ import { CategoryAxis, XAxis, YAxis, type AxisTick } from './ChartAxis';
 import { ChartTable } from './ChartTable';
 import { ChartTooltip, useChartTooltip } from './ChartTooltip';
 import { linear, niceTicks } from './scales';
-import { bandLayout, cappedBar, slotColor, valueExtent } from './chartUtils';
+import { bandLayout, cappedBar, categoryGutter, slotColor, valueExtent } from './chartUtils';
 import { plotArea, withMargin, type Margin, type StackKey, type StackedDatum } from './types';
 
 export type StackedBarChartProps = {
@@ -79,7 +79,8 @@ export function StackedBarChart({
   const tip = useChartTooltip<{ stack: Stack; segment: Segment }>();
 
   const vertical = orientation === 'vertical';
-  const m = withMargin(margin ?? (vertical ? {} : { left: 104, bottom: 24, right: 30 }));
+  const gutter = vertical ? 0 : categoryGutter(data.map((d) => d.label ?? d.key), size.width);
+  const m = withMargin(margin ?? (vertical ? {} : { left: gutter, bottom: 24, right: 30 }));
   const area = plotArea(size, m);
 
   const stacks = useMemo(() => buildStacks(data, keys), [data, keys]);
@@ -174,7 +175,13 @@ export function StackedBarChart({
                 />
               </g>
               <XAxis area={area} ticks={ticks} line={false} tickSize={0} />
-              <CategoryAxis area={area} bands={bands} orientation="left" every={labelEvery} />
+              <CategoryAxis
+                area={area}
+                bands={bands}
+                orientation="left"
+                every={labelEvery}
+                labelWidth={gutter}
+              />
             </>
           )}
 

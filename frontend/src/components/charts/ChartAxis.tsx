@@ -1,4 +1,5 @@
 import { CHART } from '@/lib/tokens';
+import { truncateToWidth } from './chartUtils';
 import type { PlotArea } from './types';
 
 export type AxisTick = { value: number; label: string; offset: number };
@@ -113,6 +114,8 @@ export type CategoryAxisProps = {
   /** Show every nth label when space is tight. */
   every?: number;
   rotate?: number;
+  /** Available width for a left-orientation label; longer text is ellipsised. */
+  labelWidth?: number;
 };
 
 /** Categorical axis for bar/stacked charts. */
@@ -122,6 +125,7 @@ export function CategoryAxis({
   orientation = 'bottom',
   every = 1,
   rotate = 0,
+  labelWidth,
 }: CategoryAxisProps) {
   return (
     <g aria-hidden>
@@ -160,7 +164,8 @@ export function CategoryAxis({
               fill={CHART.label}
               fontSize={10.5}
             >
-              {band.label}
+              <title>{band.label}</title>
+              {labelWidth ? truncateToWidth(band.label, labelWidth - 10) : band.label}
             </text>
           )
         ) : null,
