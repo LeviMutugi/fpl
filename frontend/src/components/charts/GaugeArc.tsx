@@ -1,4 +1,3 @@
-import { useId } from 'react';
 import { cn } from '@/lib/cn';
 import { useMeasure } from '@/lib/useMeasure';
 import { useReducedMotion } from '@/lib/useReducedMotion';
@@ -27,7 +26,7 @@ export type GaugeArcProps = {
   /** Fill token; the track is a lighter step of the same ramp by default. */
   token?: string;
   trackToken?: string;
-  /** Qualitative bands drawn as ticks on the outside of the track. */
+  /** Qualitative bands drawn as a thin rail just inside the track. */
   bands?: readonly GaugeBand[];
   /** A second value drawn as a needle-style tick (e.g. the league median). */
   comparison?: number | null;
@@ -61,7 +60,6 @@ export function GaugeArc({
   ariaLabel,
 }: GaugeArcProps) {
   const [ref, size] = useMeasure<HTMLDivElement>();
-  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const reduced = useReducedMotion();
 
   const ready = size.width > 0;
@@ -98,13 +96,7 @@ export function GaugeArc({
           aria-label={`${ariaLabel}: ${fraction === null || value === null ? 'no data' : formatValue(value)}`}
           className="overflow-visible"
         >
-          <defs>
-            <clipPath id={uid}>
-              <rect x={0} y={0} width={size.width} height={height} />
-            </clipPath>
-          </defs>
-
-          <g clipPath={`url(#${uid})`}>
+          <g>
             <path
               aria-hidden
               d={arcPath(cx, cy, radius, start, end)}
@@ -121,7 +113,7 @@ export function GaugeArc({
                 d={arcPath(
                   cx,
                   cy,
-                  radius + thickness / 2 + 5,
+                  radius - thickness / 2 - 4,
                   angleAt(clampUnit(band.from)),
                   angleAt(clampUnit(band.to)),
                 )}

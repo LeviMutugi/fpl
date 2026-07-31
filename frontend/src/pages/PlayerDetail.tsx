@@ -1,10 +1,11 @@
 import { ArrowLeft, Info } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { BarChart, Distribution, RadarChart } from '@/components/charts';
 import { DifficultyPill, PlayerImage, TeamBadge } from '@/components/football';
 import { StatTile } from '@/components/kokonut';
-import { MetricRow, PageHeader, Section } from '@/components/layout';
+import { QueryError } from '@/components/QueryState';
+import { MetricRow, Section } from '@/components/layout';
 import {
   Badge,
   Button,
@@ -13,11 +14,10 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
-  ErrorState,
   Skeleton,
   Tooltip,
 } from '@/components/ui';
-import { NO, dateTime, money, num, pct } from '@/lib/format';
+import { NO_DATA, dateTime, money, num, pct } from '@/lib/format';
 import { usePrefs } from '@/lib/prefs';
 import { usePlayer } from '@/hooks/useEngine';
 
@@ -39,6 +39,7 @@ const COMPONENT_LABELS: Record<string, string> = {
 };
 
 export default function PlayerDetailPage() {
+  const navigate = useNavigate();
   const params = useParams<{ id: string }>();
   const prefs = usePrefs();
   const playerId = params.id ? Number(params.id) : null;
@@ -52,7 +53,7 @@ export default function PlayerDetailPage() {
       </div>
     );
   }
-  if (query.isError) return <ErrorState error={query.error} onRetry={() => void query.refetch()} />;
+  if (query.isError) return <QueryError error={query.error} onRetry={() => void query.refetch()} />;
 
   const player = query.data;
   if (!player) return <EmptyState title="Player not found" description="No player with that id." />;
@@ -62,15 +63,13 @@ export default function PlayerDetailPage() {
   const components = prediction
     ? Object.entries(prediction.components)
         .filter(([, value]) => Math.abs(value) > 0.001)
-        .map(([key, value]) => ({ label: COMPONENT_LABELS[key] ?? key, value }))
+        .map(([key, value]) => ({ key, label: COMPONENT_LABELS[key] ?? key, value }))
     : [];
 
   return (
     <>
-      <Button variant="ghost" size="sm" asChild className="mb-2 -ml-2">
-        <Link to="/players">
-          <ArrowLeft className="size-4" /> Back to explorer
-        </Link>
+      <Button variant="ghost" size="sm" className="mb-2 -ml-2" onClick={() => navigate('/players')}>
+        <ArrowLeft className="size-4" /> Back to explorer
       </Button>
 
       <div className="flex flex-wrap items-start gap-6 rounded-3xl bg-surface-raised p-6 shadow-sm ring-1 ring-border">
@@ -154,10 +153,12 @@ export default function PlayerDetailPage() {
             <CardBody>
               {player.pmf && player.pmf.length > 0 ? (
                 <Distribution
-                  data={player.pmf}
+                  pmf={player.pmf}
                   mean={prediction?.xp ?? null}
-                  p10={prediction?.p10 ?? null}
-                  p90={prediction?.p90 ?? null}
+                  band={
+                    prediction ? { lo: prediction.p10, hi: prediction.p90 } : null
+                  }
+                  regions
                   height={260}
                   ariaLabel={`Points distribution for ${player.web_name}`}
                 />
@@ -214,10 +215,10 @@ export default function PlayerDetailPage() {
                         <DifficultyPill value={fixture.difficulty} />
                       </td>
                       <td className="py-2 text-text-faint">
-                        {fixture.kickoff ? dateTime(fixture.kickoff) : NO}
+                        {fixture.kickoff ? dateTime(fixture.kickoff) : NO_DATA}
                       </td>
                       <td className="py-2 text-right tabular-nums">
-                        {fixture.xp === null ? NO : num(fixture.xp, 2)}
+                        {fixture.xp === null ? NO_DATA : num(fixture.xp, 2)}
                       </td>
                     </tr>
                   ))}
@@ -238,21 +239,25 @@ export default function PlayerDetailPage() {
                     height={260}
                     ariaLabel={`Per-90 profile for ${player.web_name}`}
                     axes={[
-                      { key: 'xg90', label: 'xG/90', max: 1 },
-                      { key: 'xa90', label: 'xA/90', max: 0.6 },
-                      { key: 'bps90', label: 'BPS/90', max: 35 },
-                      { key: 'starts', label: 'Start rate', max: 1 },
-                      { key: 'pts90', label: 'Pts/90', max: 8 },
+                      { id: 'xg90', label: 'xG/90' },
+                      { id: 'xa90', label: 'xA/90' },
+                      { id: 'bps90', label: 'BPS/90' },
+                      { id: 'starts', label: 'Start rate' },
+                      { id: 'pts90', label: 'Pts/90' },
                     ]}
                     series={[
                       {
+                        id: String(player.id),
                         label: player.web_name,
+                        // Normalised against a generous ceiling per axis, so the
+                        // shape is comparable between players without implying a
+                        // percentile the data cannot support.
                         values: {
-                          xg90: season.xg90,
-                          xa90: season.xa90,
-                          bps90: season.bps90,
-                          starts: season.minutes ? season.starts / 38 : 0,
-                          pts90: season.pts90,
+                          xg90: Math.min(1, season.xg90 / 1.0),
+                          xa90: Math.min(1, season.xa90 / 0.6),
+                          bps90: Math.min(1, season.bps90 / 35),
+                          starts: Math.min(1, season.starts / 38),
+                          pts90: Math.min(1, season.pts90 / 8),
                         },
                       },
                     ]}
@@ -274,7 +279,7 @@ export default function PlayerDetailPage() {
                     ).map(([label, value]) => (
                       <div key={label}>
                         <dt className="text-text-faint">{label}</dt>
-                        <dd className="font-medium tabular-nums">{value ?? NO}</dd>
+                        <dd className="font-medium tabular-nums">{value ?? NO_DATA}</dd>
                       </div>
                     ))}
                   </dl>
@@ -290,7 +295,11 @@ export default function PlayerDetailPage() {
           <Card>
             <CardBody className="space-y-4">
               <BarChart
-                data={player.model_spread.map((entry) => ({ label: entry.name, value: entry.xp }))}
+                data={player.model_spread.map((entry) => ({
+                  key: entry.model_id,
+                  label: entry.name,
+                  value: entry.xp,
+                }))}
                 orientation="horizontal"
                 height={140}
                 ariaLabel="Expected points by model"
@@ -303,7 +312,11 @@ export default function PlayerDetailPage() {
                   <BarChart
                     data={player.explain
                       .slice(0, 8)
-                      .map((entry) => ({ label: entry.feature, value: entry.contribution }))}
+                      .map((entry) => ({
+                        key: entry.feature,
+                        label: entry.feature,
+                        value: entry.contribution,
+                      }))}
                     orientation="horizontal"
                     height={180}
                     ariaLabel="Feature contributions"
@@ -318,7 +331,7 @@ export default function PlayerDetailPage() {
         </Section>
       </div>
 
-      {(player.odds.length > 0 || player.news.length > 0 || player.fbref) && (
+      {(player.odds.length > 0 || player.news_reports.length > 0 || player.fbref) && (
         <Section title="External sources">
           <div className="grid gap-4 lg:grid-cols-3">
             <Card>
@@ -372,11 +385,11 @@ export default function PlayerDetailPage() {
                 <CardTitle>News</CardTitle>
               </CardHeader>
               <CardBody>
-                {player.news.length === 0 ? (
+                {player.news_reports.length === 0 ? (
                   <p className="text-[12.5px] text-text-muted">No availability reports linked.</p>
                 ) : (
                   <ul className="space-y-2 text-[12.5px]">
-                    {player.news.slice(0, 4).map((item, index) => (
+                    {player.news_reports.slice(0, 4).map((item, index) => (
                       <li key={index}>
                         <p className="leading-relaxed">{item.text}</p>
                         <p className="mt-0.5 text-text-faint">

@@ -2,9 +2,8 @@ import { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 
 import { AppShell } from '@/components/layout';
-import { CommandPalette, Skeleton, ToastViewport, type CommandItem } from '@/components/ui';
+import { Skeleton, ToastViewport, type CommandItem } from '@/components/ui';
 import { NAV } from '@/lib/nav';
-import { useUiStore } from '@/lib/uiStore';
 import { useMeta } from '@/hooks/useEngine';
 
 const Overview = lazy(() => import('@/pages/Overview'));
@@ -21,6 +20,37 @@ const Sources = lazy(() => import('@/pages/Sources'));
 const Settings = lazy(() => import('@/pages/Settings'));
 const Showcase = lazy(() => import('@/pages/Showcase'));
 
+/** Gameweek and deadline for the top bar, read from the engine's own metadata. */
+function GameweekBadge() {
+  const meta = useMeta();
+  const event = meta.data?.next_event ?? meta.data?.current_event ?? null;
+  if (event === null) return null;
+  const deadline = meta.data?.next_deadline;
+  return (
+    <span className="text-[12.5px] text-text-muted">
+      <span className="font-medium text-text">GW{event}</span>
+      {deadline ? ` · ${new Date(deadline).toLocaleDateString(undefined, {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      })}` : ''}
+    </span>
+  );
+}
+
+/** How many sources last landed cleanly — the honest one-glance summary. */
+function FreshnessBadge() {
+  const meta = useMeta();
+  const sources = meta.data?.data_freshness ?? [];
+  if (sources.length === 0) return null;
+  const live = sources.filter((s) => s.status === 'ok' || s.status === 'partial').length;
+  return (
+    <span className="text-[12px] text-text-faint">
+      {live}/{sources.length} sources live
+    </span>
+  );
+}
+
 function PageFallback() {
   return (
     <div className="space-y-4">
@@ -33,25 +63,20 @@ function PageFallback() {
 
 export default function App() {
   const navigate = useNavigate();
-  const meta = useMeta();
-  const paletteOpen = useUiStore((s) => s.paletteOpen);
-  const setPaletteOpen = useUiStore((s) => s.setPaletteOpen);
 
-  const commands: CommandItem[] = NAV.map((item) => ({
-    id: item.to,
-    label: item.label,
-    hint: item.hint,
-    icon: item.icon,
-    run: () => navigate(item.to),
-  }));
+  const commands: CommandItem[] = NAV.map((item) => {
+    const Icon = item.icon;
+    return {
+      id: item.to,
+      label: item.label,
+      hint: item.hint,
+      icon: <Icon className="size-4" />,
+      onSelect: () => navigate(item.to),
+    };
+  });
 
   return (
-    <AppShell
-      event={meta.data?.next_event ?? meta.data?.current_event ?? null}
-      deadline={meta.data?.next_deadline ?? null}
-      freshness={meta.data?.data_freshness ?? []}
-      run={meta.data?.active_run ?? null}
-    >
+    <AppShell gameweek={<GameweekBadge />} freshness={<FreshnessBadge />} commandItems={commands}>
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route path="/" element={<Overview />} />
@@ -71,7 +96,6 @@ export default function App() {
         </Routes>
       </Suspense>
 
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} items={commands} />
       <ToastViewport />
     </AppShell>
   );

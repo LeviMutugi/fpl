@@ -1,21 +1,20 @@
-import { RefreshCw, Shuffle, Sparkles, Wand2 } from 'lucide-react';
+import { RefreshCw, Wand2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { StackedBarChart } from '@/components/charts';
 import { Pitch, PitchSlot, PlayerChip } from '@/components/football';
 import { ROW_BENCH, ROW_MID } from '@/components/football/FormationSlots';
-import { AnimatedNumber, StatTile } from '@/components/kokonut';
+import { StatTile } from '@/components/kokonut';
+import { QueryError } from '@/components/QueryState';
 import { MetricRow, PageHeader, Section } from '@/components/layout';
 import {
-  Badge,
   Button,
   Card,
   CardBody,
   CardHeader,
   CardTitle,
   EmptyState,
-  ErrorState,
   SegmentedControl,
   Select,
   Skeleton,
@@ -52,16 +51,17 @@ function DecompositionCard({ solve }: { solve: OptimizeResponse }) {
     .filter((player) => player.prediction)
     .sort((a, b) => (b.prediction?.xp ?? 0) - (a.prediction?.xp ?? 0))
     .map((player) => ({
+      key: String(player.id),
       label: player.web_name,
-      segments: [
-        { key: 'appearance', value: player.prediction?.components.appearance ?? 0 },
-        { key: 'goals', value: player.prediction?.components.goals ?? 0 },
-        { key: 'assists', value: player.prediction?.components.assists ?? 0 },
-        { key: 'clean_sheet', value: player.prediction?.components.clean_sheet ?? 0 },
-        { key: 'saves', value: player.prediction?.components.saves ?? 0 },
-        { key: 'bonus', value: player.prediction?.components.bonus ?? 0 },
-        { key: 'negative', value: player.prediction?.components.negative ?? 0 },
-      ],
+      values: {
+        appearance: player.prediction?.components.appearance ?? 0,
+        goals: player.prediction?.components.goals ?? 0,
+        assists: player.prediction?.components.assists ?? 0,
+        clean_sheet: player.prediction?.components.clean_sheet ?? 0,
+        saves: player.prediction?.components.saves ?? 0,
+        bonus: player.prediction?.components.bonus ?? 0,
+        negative: player.prediction?.components.negative ?? 0,
+      },
     }));
 
   return (
@@ -76,13 +76,13 @@ function DecompositionCard({ solve }: { solve: OptimizeResponse }) {
           height={Math.max(240, data.length * 30)}
           ariaLabel="Expected points decomposition per starting player"
           keys={[
-            { key: 'appearance', label: 'Appearance' },
-            { key: 'goals', label: 'Goals' },
-            { key: 'assists', label: 'Assists' },
-            { key: 'clean_sheet', label: 'Clean sheet' },
-            { key: 'saves', label: 'Saves' },
-            { key: 'bonus', label: 'Bonus' },
-            { key: 'negative', label: 'Deductions' },
+            { id: 'appearance', label: 'Appearance' },
+            { id: 'goals', label: 'Goals' },
+            { id: 'assists', label: 'Assists' },
+            { id: 'clean_sheet', label: 'Clean sheet' },
+            { id: 'saves', label: 'Saves' },
+            { id: 'bonus', label: 'Bonus' },
+            { id: 'negative', label: 'Deductions' },
           ]}
         />
       </CardBody>
@@ -91,6 +91,7 @@ function DecompositionCard({ solve }: { solve: OptimizeResponse }) {
 }
 
 export default function SquadStudioPage() {
+  const navigate = useNavigate();
   const prefs = usePrefs();
   const meta = useMeta();
   const optimize = useOptimize();
@@ -166,7 +167,7 @@ export default function SquadStudioPage() {
         >
           {optimize.isPending && !solve && <Skeleton className="aspect-[3/4] w-full rounded-3xl" />}
           {optimize.isError && (
-            <ErrorState error={optimize.error} onRetry={() => optimize.mutate(request)} />
+            <QueryError error={optimize.error} onRetry={() => optimize.mutate(request)} />
           )}
           {solve && (
             <Pitch formation={solve.formation} showBench ariaLabel="Optimised starting eleven">
@@ -211,7 +212,7 @@ export default function SquadStudioPage() {
                   step={0.5}
                   value={budget}
                   onChange={setBudget}
-                  format={(value) => money(value)}
+                  valueLabel={money(budget)}
                 />
                 <Slider
                   label="Max per club"
@@ -220,12 +221,14 @@ export default function SquadStudioPage() {
                   step={1}
                   value={maxPerTeam}
                   onChange={setMaxPerTeam}
+                  valueLabel={String(maxPerTeam)}
                 />
                 <div className="space-y-1.5">
                   <span className="text-[12.5px] font-medium text-text-muted">Planning horizon</span>
                   <SegmentedControl
                     value={String(prefs.horizon)}
                     onChange={(value) => prefs.setHorizon(Number(value))}
+                    ariaLabel="Planning horizon"
                     options={[1, 3, 5, 8].map((n) => ({ value: String(n), label: `${n}` }))}
                   />
                 </div>
@@ -252,7 +255,7 @@ export default function SquadStudioPage() {
             </Card>
           </Section>
 
-          <Section title="Chip" icon={<Sparkles className="size-4" />}>
+          <Section title="Chip">
             <Card>
               <CardBody className="space-y-2">
                 {CHIPS.map((option) => (
@@ -283,7 +286,6 @@ export default function SquadStudioPage() {
           <Section
             title="Binding constraints"
             description="What is actually holding the solution back, read from the solved model."
-            icon={<Shuffle className="size-4" />}
           >
             <Card>
               <CardBody className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -351,18 +353,17 @@ export default function SquadStudioPage() {
         <EmptyState
           title="No squad yet"
           description="The engine has no completed model run to optimise against."
-          action={
-            <Button asChild>
-              <Link to="/sources">Go to Data Sources</Link>
-            </Button>
-          }
+          action={<Button onClick={() => navigate('/sources')}>Go to Data Sources</Button>}
         />
       )}
 
       {selected !== null && (
-        <Tooltip content="Open full player detail">
-          <Button asChild className="fixed bottom-6 right-6 shadow-lg">
-            <Link to={`/players/${selected}`}>Open player detail</Link>
+        <Tooltip content="Open the full player page">
+          <Button
+            className="fixed bottom-6 right-6 shadow-lg"
+            onClick={() => navigate(`/players/${selected}`)}
+          >
+            Open player detail
           </Button>
         </Tooltip>
       )}

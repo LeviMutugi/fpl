@@ -9,11 +9,11 @@ import {
   CardBody,
   CardHeader,
   CardTitle,
-  ErrorState,
   SkeletonRows,
   Tooltip,
   toast,
 } from '@/components/ui';
+import { QueryError } from '@/components/QueryState';
 import { PageHeader, Section } from '@/components/layout';
 import { relativeTime } from '@/lib/format';
 import { useMeta, useRefreshRun, useRunIngest, useSources, type SourceRow } from '@/hooks/useEngine';
@@ -85,14 +85,14 @@ function SourceCard({ source }: { source: SourceRow }) {
                 }
               >
                 <span>
-                  <Badge tone={source.missing_env?.includes(env) ? 'warning' : 'good'} variant="soft">
+                  <Badge tone={source.missing_env?.includes(env) ? 'warning' : 'good'}>
                     <code className="font-mono text-[11px]">{env}</code>
                   </Badge>
                 </span>
               </Tooltip>
             ))}
             {(source.extras ?? []).map((pkg) => (
-              <Badge key={pkg} tone="neutral" variant="soft">
+              <Badge key={pkg} tone="neutral">
                 <code className="font-mono text-[11px]">pip install {pkg}</code>
               </Badge>
             ))}
@@ -180,7 +180,7 @@ export default function SourcesPage() {
         description="A source that cannot be reached writes nothing. No value shown anywhere in this app is interpolated to cover a gap."
       >
         {sources.isLoading && <SkeletonRows rows={3} />}
-        {sources.isError && <ErrorState error={sources.error} onRetry={() => void sources.refetch()} />}
+        {sources.isError && <QueryError error={sources.error} onRetry={() => void sources.refetch()} />}
         {sources.data && (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {sources.data.map((source) => (

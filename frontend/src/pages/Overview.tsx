@@ -1,11 +1,12 @@
-import { ArrowRight, Crown, Sparkles, TrendingUp, Zap } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { BarChart } from '@/components/charts';
 import { FixtureTicker, PlayerImage, TeamBadge } from '@/components/football';
-import { AnimatedNumber, BentoGrid, BentoItem, BlurInText, GlowCard, StatTile } from '@/components/kokonut';
+import { AnimatedNumber, BentoGrid, BentoItem, GlowCard, StatTile } from '@/components/kokonut';
+import { QueryError } from '@/components/QueryState';
 import { MetricRow, PageHeader, Section } from '@/components/layout';
-import { Badge, Button, Card, CardBody, EmptyState, ErrorState, SkeletonRows } from '@/components/ui';
+import { Badge, Button, Card, CardBody, EmptyState, SkeletonRows } from '@/components/ui';
 import { money, num, pct } from '@/lib/format';
 import { usePrefs } from '@/lib/prefs';
 import { useCaptaincy, useDifferentials, useMeta, usePlayers } from '@/hooks/useEngine';
@@ -22,6 +23,7 @@ function deadlineIn(iso: string | null): string {
 }
 
 export default function OverviewPage() {
+  const navigate = useNavigate();
   const prefs = usePrefs();
   const meta = useMeta();
   const players = usePlayers({ model: prefs.model, horizon: prefs.horizon, sort: 'xp', limit: 8 });
@@ -32,22 +34,21 @@ export default function OverviewPage() {
   const top = players.data?.players ?? [];
   const captain = captaincy.data?.candidates?.[0] ?? null;
 
-  if (meta.isError) return <ErrorState error={meta.error} onRetry={() => void meta.refetch()} />;
+  if (meta.isError) return <QueryError error={meta.error} onRetry={() => void meta.refetch()} />;
 
   return (
     <>
       <PageHeader
-        title={<BlurInText text="Gameweek overview" />}
+        title="Gameweek overview"
+        animate
         subtitle={
           event
             ? `GW${event} · ${deadlineIn(meta.data?.next_deadline ?? null)}`
             : 'Waiting for the season to open'
         }
         actions={
-          <Button asChild>
-            <Link to="/pitch">
-              Open Squad Studio <ArrowRight className="size-4" />
-            </Link>
+          <Button onClick={() => navigate('/pitch')}>
+            Open Squad Studio <ArrowRight className="size-4" />
           </Button>
         }
       />
@@ -81,7 +82,7 @@ export default function OverviewPage() {
         description={`Ranked by the ${prefs.model} model for GW${event ?? '—'}, with the p10–p90 range behind each estimate.`}
       >
         {players.isLoading && <SkeletonRows rows={4} />}
-        {players.isError && <ErrorState error={players.error} onRetry={() => void players.refetch()} />}
+        {players.isError && <QueryError error={players.error} onRetry={() => void players.refetch()} />}
         {players.data && top.length === 0 && (
           <EmptyState
             title="No predictions yet"
@@ -91,7 +92,7 @@ export default function OverviewPage() {
         {top.length > 0 && (
           <BentoGrid>
             {top.slice(0, 6).map((player, index) => (
-              <BentoItem key={player.id} span={index === 0 ? 2 : 1}>
+              <BentoItem key={player.id} colSpan={index === 0 ? 2 : 1}>
                 <Link to={`/players/${player.id}`} className="block h-full focus-visible:outline-none">
                   <GlowCard className="h-full">
                     <div className="flex h-full items-center gap-4 p-4">
@@ -107,7 +108,7 @@ export default function OverviewPage() {
                           <span className="truncate font-display text-[15px] font-semibold">
                             {player.web_name}
                           </span>
-                          <Badge tone="neutral" variant="soft">
+                          <Badge tone="neutral">
                             {player.position}
                           </Badge>
                         </div>
@@ -147,7 +148,6 @@ export default function OverviewPage() {
         <Section
           title="Captaincy shortlist"
           description="Ranked on mean expected points; the haul probability is what the armband is really buying."
-          icon={<Crown className="size-4" />}
         >
           {captaincy.isLoading && <SkeletonRows rows={3} />}
           {captaincy.data && captain && (
@@ -176,14 +176,13 @@ export default function OverviewPage() {
                   height={190}
                   ariaLabel="Captaincy candidates by expected points"
                   data={captaincy.data.candidates.slice(0, 6).map((row) => ({
+                    key: String(row.id),
                     label: row.web_name,
                     value: row.xp,
                   }))}
                 />
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/captain">
-                    All candidates <ArrowRight className="size-3.5" />
-                  </Link>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/captain')}>
+                  All candidates <ArrowRight className="size-3.5" />
                 </Button>
               </CardBody>
             </Card>
@@ -193,7 +192,6 @@ export default function OverviewPage() {
         <Section
           title="Differentials"
           description="High expected points at low ownership — where a rank move actually comes from."
-          icon={<Zap className="size-4" />}
         >
           {differentials.isLoading && <SkeletonRows rows={3} />}
           {differentials.data && (
@@ -222,10 +220,8 @@ export default function OverviewPage() {
                     </span>
                   </Link>
                 ))}
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/differentials">
-                    Full differential board <ArrowRight className="size-3.5" />
-                  </Link>
+                <Button variant="ghost" size="sm" onClick={() => navigate('/differentials')}>
+                  Full differential board <ArrowRight className="size-3.5" />
                 </Button>
               </CardBody>
             </Card>
@@ -236,7 +232,6 @@ export default function OverviewPage() {
       <Section
         title="Where the model is looking next"
         description="The fixture run behind the top-rated players over the planning horizon."
-        icon={<TrendingUp className="size-4" />}
       >
         <Card>
           <CardBody className="space-y-3">
@@ -244,13 +239,8 @@ export default function OverviewPage() {
               <div key={player.id} className="flex flex-wrap items-center gap-3">
                 <span className="w-32 shrink-0 truncate text-[13px] font-medium">{player.web_name}</span>
                 <FixtureTicker
-                  fixtures={(player.horizon?.per_event ?? []).map((entry) => ({
-                    event: entry.event,
-                    opponent: entry.opponent,
-                    isHome: entry.is_home,
-                    difficulty: entry.difficulty,
-                    xp: entry.xp,
-                  }))}
+                  fixtures={player.horizon?.per_event ?? []}
+                  showXp
                 />
                 <span className="ml-auto text-[13px] font-semibold tabular-nums">
                   {num(player.horizon?.xp_total ?? null, 1)}
@@ -264,7 +254,7 @@ export default function OverviewPage() {
         </Card>
       </Section>
 
-      <Section title="Engine provenance" icon={<Sparkles className="size-4" />}>
+      <Section title="Engine provenance">
         <Card>
           <CardBody className="text-[13px] leading-relaxed text-text-muted">
             {meta.data?.active_run ? (

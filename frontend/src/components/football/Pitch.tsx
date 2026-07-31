@@ -196,7 +196,7 @@ export function Pitch({
               />
             ))}
             {/* A faint cross-mow so the stripes do not read as flat bands. */}
-            {[0, 1, 2, 3].map((i) => (
+            {[0, 2].map((i) => (
               <rect
                 key={`v${i}`}
                 x={(i * VB_W) / 4}
@@ -204,7 +204,7 @@ export function Pitch({
                 width={VB_W / 4}
                 height={VB_H}
                 fill="var(--color-pitch-turf-alt)"
-                opacity={i % 2 === 0 ? 0.07 : 0}
+                opacity={0.07}
               />
             ))}
 

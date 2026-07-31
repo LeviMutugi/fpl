@@ -40,6 +40,7 @@ export default function SettingsPage() {
               <SegmentedControl
                 value={mode}
                 onChange={(value) => setMode(value as typeof mode)}
+                ariaLabel="Colour scheme"
                 options={THEME_OPTIONS}
               />
             </div>
@@ -85,6 +86,7 @@ export default function SettingsPage() {
               <SegmentedControl
                 value={prefs.model}
                 onChange={(value) => prefs.setModel(value as typeof prefs.model)}
+                ariaLabel="Default model"
                 options={[
                   { value: 'ensemble', label: 'Ensemble' },
                   { value: 'structural', label: 'Structural' },
@@ -103,6 +105,7 @@ export default function SettingsPage() {
               <SegmentedControl
                 value={String(prefs.horizon)}
                 onChange={(value) => prefs.setHorizon(Number(value))}
+                ariaLabel="Default planning horizon"
                 options={[1, 3, 5, 8].map((n) => ({ value: String(n), label: `${n} GW` }))}
               />
             </div>

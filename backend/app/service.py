@@ -807,7 +807,7 @@ def player_detail(
             if fbref
             else None,
             "odds": odds,
-            "news": news,
+            "news_reports": news,
             "gameweek_history": history,
         }
     )

@@ -262,7 +262,7 @@ export function PlayerCard({
 
         <div className="grid shrink-0 grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-4">
           <MetaStat label="Price" value={money(player.price)} />
-          <MetaStat label="xP" value={xp === null ? NO_DATA : num(xp, 2)} />
+          <MetaStat label="xP" value={num(xp, 2)} />
           <MetaStat label="Owned" value={fmtOwnership(player.ownership)} />
           <MetaStat label="Form" value={num(player.form, 1)} />
         </div>

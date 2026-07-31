@@ -151,8 +151,9 @@ type PlayerDetail = PlayerRow & {
   fbref: Record<string, number> | null;   // null when FBref not ingested
   odds: { market: string; selection: string; price: number;
           implied_prob: number; provider: string; captured_at: string }[];
-  news: { source: string; author: string | null; published_at: string | null;
-          text: string; url: string | null }[];
+  /** Named apart from `news`, which is the FPL flag text on every player row. */
+  news_reports: { source: string; author: string | null; published_at: string | null;
+                  text: string; url: string | null }[];
   gameweek_history: { event: number; minutes: number; total_points: number;
                       opponent: string | null; was_home: boolean | null;
                       xg: number; xa: number; bps: number }[]; // [] when not ingested

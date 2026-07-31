@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { cn } from '@/lib/cn';
 import { useMeasure } from '@/lib/useMeasure';
 import { CHART, CHART_GEOMETRY, seriesColor } from '@/lib/tokens';
+import { NO_DATA } from '@/lib/format';
 import { XAxis, YAxis, type AxisTick } from './ChartAxis';
+import { ChartTable } from './ChartTable';
 import { ChartTooltip, useChartTooltip } from './ChartTooltip';
 import {
   extentX,
@@ -34,6 +36,8 @@ export type LineChartProps = {
   ariaLabel: string;
   /** Optional horizontal reference rule (e.g. a league average). */
   reference?: { y: number; label: string } | null;
+  /** Caption for the screen-reader table twin. */
+  tableCaption?: string;
 };
 
 /**
@@ -56,6 +60,7 @@ export function LineChart({
   className,
   ariaLabel,
   reference = null,
+  tableCaption,
 }: LineChartProps) {
   const [ref, size] = useMeasure<HTMLDivElement>();
   const tip = useChartTooltip<{ seriesId: string; x: number; y: number }>();
@@ -233,6 +238,25 @@ export function LineChart({
               ]
             : []
         }
+      />
+
+      <ChartTable
+        caption={tableCaption ?? ariaLabel}
+        columns={['x', ...series.map((s) => s.label)]}
+        rows={(() => {
+          const xs = [...new Set(series.flatMap((s) => s.points.map((p) => p.x)))].sort(
+            (a, b) => a - b,
+          );
+          return xs.map((x) => [
+            formatX(x),
+            ...series.map((s) => {
+              const point = s.points.find((p) => p.x === x);
+              return point && point.y !== null && Number.isFinite(point.y)
+                ? formatY(point.y)
+                : NO_DATA;
+            }),
+          ]);
+        })()}
       />
     </div>
   );

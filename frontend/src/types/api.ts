@@ -41,8 +41,19 @@ export type RunInfo = {
   n_players: number;
   n_train_rows: number;
   models: string[];
+  season: string | null;
   season_source: string;
   history_rows: number;
+  duration_ms: number | null;
+  /** Non-negative least squares blend weights, keyed by model id. */
+  stack_weights: Record<string, number>;
+  /** Stated modelling assumptions — home/away factors, priors, scoring rules. */
+  assumptions: Record<string, unknown>;
+  /** Gradient-boosted model config: features used, features excluded and why. */
+  gbm: Record<string, unknown>;
+  /** Target, scheme, n, and the notes on what the metrics do and don't measure. */
+  evaluation: Record<string, unknown>;
+  defensive_contribution_available: boolean | null;
 };
 
 export type EventInfo = {
@@ -136,6 +147,11 @@ export type SeasonStats = {
   defcon90: number;
   bps90: number;
   pts90: number;
+  total_points: number;
+  goals_conceded: number;
+  yellow_cards: number;
+  red_cards: number;
+  defensive_contribution: number;
   ict_index: number;
   threat: number;
   creativity: number;
@@ -213,6 +229,9 @@ export type PlayerRow = {
   team_id: number;
   team: string;
   team_name: string;
+  team_code: number;
+  team_primary_hex: string | null;
+  team_secondary_hex: string | null;
   position: Position;
   element_type: number;
   price: number;
@@ -227,6 +246,10 @@ export type PlayerRow = {
   points_per_game: number | null;
   total_points: number | null;
   ep_next: number | null;
+  news_added: string | null;
+  dreamteam_count: number;
+  transfers_in_event: number;
+  transfers_out_event: number;
   season: SeasonStats | null;
   set_pieces: {
     penalties: number | null;
@@ -262,7 +285,8 @@ export type PlayerDetail = PlayerRow & {
     provider: string;
     captured_at: string;
   }[];
-  news: {
+  /** Named apart from `news`, which is the FPL flag text on every player row. */
+  news_reports: {
     source: string;
     author: string | null;
     published_at: string | null;
@@ -330,6 +354,10 @@ export type LeaderboardModel = {
   hue: number;
   metrics: Record<string, number>;
   available: boolean;
+  /** Why this model has no metrics — shown instead of hiding the row. */
+  unavailable_reason: string | null;
+  /** Its share of the non-negative least squares blend, when it has one. */
+  stack_weight: number | null;
 };
 
 export type Leaderboard = {
@@ -375,7 +403,7 @@ export type SquadPlayer = PlayerRow & {
   bench_order: number | null;
   is_captain: boolean;
   is_vice: boolean;
-  pitch_slot: { row: number; col: number };
+  pitch_slot: { row: number; col: number; of: number } | null;
 };
 
 export type OptimizeResponse = {
@@ -398,5 +426,19 @@ export type OptimizeResponse = {
   transfers: { out: SquadPlayer; in: SquadPlayer; delta_xp: number }[] | null;
   hits: number;
   binding: { constraint: string; slack: number; note: string }[];
-  per_event: { event: number; xi_xp: number; captain: string }[];
+  per_event: {
+    event: number;
+    xi_xp: number;
+    captain: string | null;
+    captain_code: number | null;
+    captain_id: number;
+    captain_bonus: number;
+    bench_xp: number;
+  }[];
+  event: number;
+  events: number[];
+  pool_size: number;
+  chip: ChipName;
+  /** Solver caveats — candidate pool size, bench weights, sequencing limits. */
+  notes: string[];
 };

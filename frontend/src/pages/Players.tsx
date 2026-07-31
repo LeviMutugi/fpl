@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { Sparkline } from '@/components/charts';
 import { AvailabilityDot, PlayerCard, PlayerImage, TeamBadge } from '@/components/football';
+import { QueryError } from '@/components/QueryState';
 import { PageHeader, Section } from '@/components/layout';
 import {
   Badge,
@@ -11,7 +12,6 @@ import {
   Card,
   CardBody,
   EmptyState,
-  ErrorState,
   Input,
   SegmentedControl,
   Select,
@@ -26,7 +26,7 @@ import {
   nextSort,
   type SortState,
 } from '@/components/ui';
-import { NO, money, num, pct } from '@/lib/format';
+import { NO_DATA, money, num, pct } from '@/lib/format';
 import { usePrefs } from '@/lib/prefs';
 import { useUiStore } from '@/lib/uiStore';
 import { usePlayers, useTeams } from '@/hooks/useEngine';
@@ -55,7 +55,7 @@ const POSITIONS = ['ALL', 'GKP', 'DEF', 'MID', 'FWD'];
 function PlayerRowCells({ player, onOpen }: { player: PlayerRow; onOpen: () => void }) {
   const spark = player.horizon?.per_event.map((entry) => entry.xp) ?? [];
   return (
-    <TableRow onClick={onOpen} interactive>
+    <TableRow onClick={onOpen}>
       <TableCell>
         <div className="flex items-center gap-2.5">
           <PlayerImage
@@ -82,7 +82,7 @@ function PlayerRowCells({ player, onOpen }: { player: PlayerRow; onOpen: () => v
         </div>
       </TableCell>
       <TableCell>
-        <Badge tone="neutral" variant="soft">
+        <Badge tone="neutral">
           {player.position}
         </Badge>
       </TableCell>
@@ -90,7 +90,7 @@ function PlayerRowCells({ player, onOpen }: { player: PlayerRow; onOpen: () => v
         {money(player.price)}
       </TableCell>
       <TableCell align="right" numeric>
-        {player.prediction ? num(player.prediction.xp, 2) : NO}
+        {player.prediction ? num(player.prediction.xp, 2) : NO_DATA}
       </TableCell>
       <TableCell align="right" numeric>
         {player.prediction ? (
@@ -98,23 +98,23 @@ function PlayerRowCells({ player, onOpen }: { player: PlayerRow; onOpen: () => v
             {num(player.prediction.p10, 0)}–{num(player.prediction.p90, 0)}
           </span>
         ) : (
-          NO
+          NO_DATA
         )}
       </TableCell>
       <TableCell align="right" numeric>
-        {player.horizon ? num(player.horizon.xp_total, 1) : NO}
+        {player.horizon ? num(player.horizon.xp_total, 1) : NO_DATA}
       </TableCell>
       <TableCell align="right" numeric>
-        {player.value_per_million === null ? NO : num(player.value_per_million, 2)}
+        {player.value_per_million === null ? NO_DATA : num(player.value_per_million, 2)}
       </TableCell>
       <TableCell align="right" numeric>
         {pct(player.ownership)}
       </TableCell>
       <TableCell align="right" numeric>
-        {player.season ? num(player.season.xgi90, 2) : NO}
+        {player.season ? num(player.season.xgi90, 2) : NO_DATA}
       </TableCell>
       <TableCell align="right">
-        {spark.length > 1 ? <Sparkline data={spark} width={72} height={22} /> : NO}
+        {spark.length > 1 ? <Sparkline points={spark} height={22} ariaLabel="Horizon expected points" /> : NO_DATA}
       </TableCell>
     </TableRow>
   );
@@ -133,6 +133,8 @@ export default function PlayersPage() {
   const [minMinutes, setMinMinutes] = useState(0);
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const [sort, setSort] = useState<SortState>({ key: 'xp', direction: 'desc' });
+  const sortKey = sort?.key ?? 'xp';
+  const sortDir = sort?.direction ?? 'desc';
   const [view, setView] = useState<'table' | 'cards'>('table');
 
   const deferredSearch = useDeferredValue(search);
@@ -146,12 +148,12 @@ export default function PlayersPage() {
       maxCost: maxCost < 15 ? maxCost : undefined,
       minMinutes: minMinutes > 0 ? minMinutes : undefined,
       search: deferredSearch || undefined,
-      sort: sort.key,
-      order: sort.direction,
+      sort: sortKey,
+      order: sortDir,
       onlyAvailable: onlyAvailable || undefined,
       limit: 400,
     }),
-    [prefs.model, prefs.horizon, position, team, maxCost, minMinutes, deferredSearch, sort, onlyAvailable],
+    [prefs.model, prefs.horizon, position, team, maxCost, minMinutes, deferredSearch, sortKey, sortDir, onlyAvailable],
   );
 
   const players = usePlayers(query);
@@ -170,6 +172,7 @@ export default function PlayersPage() {
           <SegmentedControl
             value={view}
             onChange={(value) => setView(value as typeof view)}
+            ariaLabel="Result layout"
             options={[
               { value: 'table', label: 'Table', icon: <Rows3 className="size-3.5" /> },
               { value: 'cards', label: 'Cards', icon: <LayoutGrid className="size-3.5" /> },
@@ -185,13 +188,14 @@ export default function PlayersPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Name…"
-            icon={<Search className="size-4" />}
+            iconLeft={<Search className="size-4" />}
           />
           <div className="space-y-1.5">
             <span className="text-[12.5px] font-medium text-text-muted">Position</span>
             <SegmentedControl
               value={position}
               onChange={setPosition}
+              ariaLabel="Position filter"
               options={POSITIONS.map((value) => ({ value, label: value === 'ALL' ? 'All' : value }))}
             />
           </div>
@@ -206,7 +210,7 @@ export default function PlayersPage() {
           />
           <Select
             label="Sort by"
-            value={sort.key}
+            value={sortKey}
             onChange={(value) => setSort({ key: value, direction: value === 'name' ? 'asc' : 'desc' })}
             options={SORTS}
           />
@@ -217,7 +221,7 @@ export default function PlayersPage() {
             step={0.5}
             value={maxCost}
             onChange={setMaxCost}
-            format={(value) => (value >= 15 ? 'any' : money(value))}
+            valueLabel={maxCost >= 15 ? 'any' : money(maxCost)}
           />
           <Slider
             label="Minimum minutes last season"
@@ -226,7 +230,7 @@ export default function PlayersPage() {
             step={100}
             value={minMinutes}
             onChange={setMinMinutes}
-            format={(value) => (value === 0 ? 'any' : `${value}′`)}
+            valueLabel={minMinutes === 0 ? 'any' : `${minMinutes}′`}
           />
           <div className="flex items-end">
             <Button
@@ -243,7 +247,7 @@ export default function PlayersPage() {
 
       <Section title="Results">
         {players.isLoading && <SkeletonRows rows={8} />}
-        {players.isError && <ErrorState error={players.error} onRetry={() => void players.refetch()} />}
+        {players.isError && <QueryError error={players.error} onRetry={() => void players.refetch()} />}
         {players.data && rows.length === 0 && (
           <EmptyState
             title="No players match those filters"
@@ -267,57 +271,64 @@ export default function PlayersPage() {
         )}
 
         {rows.length > 0 && view === 'table' && (
-          <Card padded={false}>
+          <Card padding="none">
             <Table dense={dense}>
               <TableHead>
                 <TableRow>
                   <TableHeaderCell
-                    sort={sort.key === 'name' ? sort.direction : undefined}
-                    onSort={() => setSort(nextSort(sort, 'name'))}
+                    sortKey="name"
+                    sort={sort}
+                    onSort={(key) => setSort(nextSort(sort, key))}
                   >
                     Player
                   </TableHeaderCell>
                   <TableHeaderCell>Pos</TableHeaderCell>
                   <TableHeaderCell
                     align="right"
-                    sort={sort.key === 'price' ? sort.direction : undefined}
-                    onSort={() => setSort(nextSort(sort, 'price'))}
+                    sortKey="price"
+                    sort={sort}
+                    onSort={(key) => setSort(nextSort(sort, key))}
                   >
                     Price
                   </TableHeaderCell>
                   <TableHeaderCell
                     align="right"
-                    sort={sort.key === 'xp' ? sort.direction : undefined}
-                    onSort={() => setSort(nextSort(sort, 'xp'))}
+                    sortKey="xp"
+                    sort={sort}
+                    onSort={(key) => setSort(nextSort(sort, key))}
                   >
                     xP
                   </TableHeaderCell>
                   <TableHeaderCell align="right">p10–p90</TableHeaderCell>
                   <TableHeaderCell
                     align="right"
-                    sort={sort.key === 'xp_horizon' ? sort.direction : undefined}
-                    onSort={() => setSort(nextSort(sort, 'xp_horizon'))}
+                    sortKey="xp_horizon"
+                    sort={sort}
+                    onSort={(key) => setSort(nextSort(sort, key))}
                   >
                     {prefs.horizon}GW
                   </TableHeaderCell>
                   <TableHeaderCell
                     align="right"
-                    sort={sort.key === 'value' ? sort.direction : undefined}
-                    onSort={() => setSort(nextSort(sort, 'value'))}
+                    sortKey="value"
+                    sort={sort}
+                    onSort={(key) => setSort(nextSort(sort, key))}
                   >
                     xP/£m
                   </TableHeaderCell>
                   <TableHeaderCell
                     align="right"
-                    sort={sort.key === 'ownership' ? sort.direction : undefined}
-                    onSort={() => setSort(nextSort(sort, 'ownership'))}
+                    sortKey="ownership"
+                    sort={sort}
+                    onSort={(key) => setSort(nextSort(sort, key))}
                   >
                     Owned
                   </TableHeaderCell>
                   <TableHeaderCell
                     align="right"
-                    sort={sort.key === 'xgi90' ? sort.direction : undefined}
-                    onSort={() => setSort(nextSort(sort, 'xgi90'))}
+                    sortKey="xgi90"
+                    sort={sort}
+                    onSort={(key) => setSort(nextSort(sort, key))}
                   >
                     xGI/90
                   </TableHeaderCell>
@@ -346,7 +357,11 @@ export default function PlayersPage() {
                 onSelect={(id) => navigate(`/players/${id}`)}
               >
                 {player.horizon && player.horizon.per_event.length > 1 && (
-                  <Sparkline data={player.horizon.per_event.map((entry) => entry.xp)} height={26} />
+                  <Sparkline
+                    points={player.horizon.per_event.map((entry) => entry.xp)}
+                    height={26}
+                    ariaLabel="Horizon expected points"
+                  />
                 )}
               </PlayerCard>
             ))}
