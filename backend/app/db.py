@@ -92,6 +92,14 @@ def migrate(path: Path | None = None, *, rebuild_derived: bool = False) -> None:
             if "sha256" not in cols:
                 conn.execute("ALTER TABLE raw_snapshots ADD COLUMN sha256 TEXT")
 
+        # The original per-gameweek table keyed rows on `element_id`; the current
+        # one uses `player_id` and a fixture in the primary key. It only ever
+        # holds fetched history, so dropping the old shape loses nothing that a
+        # re-ingest cannot restore.
+        if _table_exists(conn, "element_gameweeks") and "element_id" in _columns(conn, "element_gameweeks"):
+            conn.execute("DROP TABLE element_gameweeks")
+            conn.commit()
+
         # A legacy `players` table has no team_id and NOT NULL photo columns.
         legacy = _table_exists(conn, "players") and "team_id" not in _columns(conn, "players")
         if legacy or rebuild_derived:

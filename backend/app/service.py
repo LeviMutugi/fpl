@@ -569,11 +569,7 @@ def serialise_player(
             "corners": row["corners_order"],
             "freekicks": row["direct_fk_order"],
         },
-        "prediction": serialise_prediction(
-            prediction, team_names.get(prediction["fixture"]["opponent_id"]) if prediction and prediction.get("fixture") else None, None
-        )
-        if isinstance(prediction, dict) and "model_id" not in prediction
-        else prediction,
+        "prediction": prediction,
         "horizon": horizon,
         "value_per_million": round(xp / price, 4) if xp and price else None,
         "dreamteam_count": row["dreamteam_count"],
