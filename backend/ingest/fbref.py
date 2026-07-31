@@ -158,6 +158,28 @@ def _classify(exc: BaseException) -> str:
     return "unreachable" if any(m in text for m in UNREACHABLE_MARKERS) else "error"
 
 
+HOST_PROBE_URL = "https://fbref.com/en/"
+
+
+def _host_unreachable() -> str | None:
+    """Return why fbref.com cannot be reached, or None when it can.
+
+    soccerdata drives a headless browser, so a network block surfaces as a
+    browser error — "Chrome not found" reads like a missing local dependency
+    when the real cause is that the host is refused. Probing first means the
+    status the UI shows names the actual blocker.
+    """
+    import httpx  # noqa: PLC0415  (lazy: only needed on this path)
+
+    try:
+        response = httpx.get(HOST_PROBE_URL, timeout=12.0, follow_redirects=True)
+    except httpx.HTTPError as exc:
+        return f"{type(exc).__name__}: {exc}"
+    if response.status_code >= 400:
+        return f"HTTP {response.status_code} from {HOST_PROBE_URL}"
+    return None
+
+
 def _f(value: Any) -> float | None:
     """Coerce a cell to float, mapping NaN/blank/non-numeric to None."""
     if value is None:
@@ -376,6 +398,12 @@ def ingest(
         msg = "FBREF_SEASONS is empty; set it to e.g. '2526'"
         log_finish(conn, run, "unconfigured", 0, msg)
         return {"source": SOURCE, "mode": "unconfigured", "rows": 0, "message": msg}
+
+    blocked = _host_unreachable()
+    if blocked:
+        msg = f"fbref.com is not reachable from this host ({blocked}); nothing was stored"
+        log_finish(conn, run, "unreachable", 0, msg)
+        return {"source": SOURCE, "mode": "unreachable", "rows": 0, "message": msg}
 
     try:
         reader = soccerdata.FBref(leagues=league, seasons=season_values)
