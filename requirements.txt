@@ -1,0 +1,19 @@
+# Core engine — everything the API, models, and solver need to run.
+fastapi==0.141.1
+uvicorn[standard]==0.52.0
+httpx==0.28.1
+numpy==2.4.6
+pandas==3.0.5
+scipy==1.17.1
+scikit-learn==1.9.0
+lightgbm==4.7.0
+PuLP==3.3.2
+pydantic==2.13.4
+python-dateutil==2.9.0.post0
+
+# Optional extras — only needed for the advanced data sources. Without them the
+# FBref and availability-agent adapters report `unconfigured` and write nothing;
+# the rest of the engine is unaffected.
+#   pip install -r requirements.txt soccerdata anthropic
+# soccerdata   -> backend/ingest/fbref.py  (FBref / Understat underlying metrics)
+# anthropic    -> backend/ingest/news.py   (LLM availability extraction)
